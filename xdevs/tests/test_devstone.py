@@ -232,7 +232,16 @@ class TestHOmod(DevstoneUtilsTestCase):
                     exp_trans += num_inputs * tr_atomics + trans_first_row
                 self.assertEqual(root.n_internals, exp_trans)
                 self.assertEqual(root.n_externals, exp_trans)
-                # TODO n_events
+
+                n = 1
+                if params["width"] > 1 and params["depth"] > 1:
+                    n += 2 * (params["width"] - 1)
+                    aux = 0
+                    for i in range(2, params["depth"]):
+                        aux += 1 + (i - 1) * (params["width"] - 1)
+                    n += aux * 2 * (params["width"] - 1) * (params["width"] - 1)
+                    n += (aux + 1) * ((params["width"] - 1) * (params["width"] - 1) + (params["width"] - 2) * (params["width"] - 1) / 2)
+                self.assertEqual(root.n_events, n)
 
     def test_invalid_inputs(self):
         super().check_invalid_inputs(HOmod)
