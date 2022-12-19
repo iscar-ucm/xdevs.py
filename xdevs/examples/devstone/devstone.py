@@ -1,11 +1,11 @@
 from __future__ import annotations
-
 from abc import ABC
+import sys
+import time
 from typing import Any
 from xdevs.models import Atomic, Coupled, Port
 from xdevs.sim import Coordinator
-from .pystone import pystones
-
+from xdevs.examples.devstone.pystone import pystones
 
 class DelayedAtomic(Atomic):
     def __init__(self, name: str, int_delay: float, ext_delay: float, test: bool = False):
@@ -284,10 +284,34 @@ class DEVStone(Coupled):
 
 
 if __name__ == '__main__':
-    import sys
     sys.setrecursionlimit(10000)
-    root = HO("HO_root", 50, 50, 0, 0)
+
+    try:
+        model_type = sys.argv[1]
+    except IndexError:
+        raise ValueError("first argument must select the model type")
+    try:
+        width = int(sys.argv[2])
+    except ValueError:
+        raise ValueError("width could not be parsed")
+    except IndexError:
+        raise ValueError("second argument must select the width")
+    try:
+        depth = int(sys.argv[3])
+    except ValueError:
+        raise ValueError("depth could not be parsed")
+    except IndexError:
+        raise ValueError("third argument must select the depth")
+    # TODO add internal and external delays
+
+    start = time.time()
+    root = DEVStone("devstone", model_type, width, depth, 0, 0)
+    middle = time.time()
     coord = Coordinator(root)
     coord.initialize()
-    coord.inject(root.i_in, 0)
+    middle2 = time.time()
     coord.simulate()
+    end = time.time()
+    print(f"Model creation time: {middle - start} seconds")
+    print(f"Engine setup time: {middle2 - middle} seconds")
+    print(f"Simulation time: {end - middle2} seconds")
