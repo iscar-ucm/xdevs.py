@@ -3,6 +3,7 @@ from __future__ import annotations
 import _thread
 import itertools
 import pickle
+import time
 
 from abc import ABC, abstractmethod
 from collections import defaultdict
@@ -75,7 +76,6 @@ class AbstractSimulator(ABC):
 
 
 class Simulator(AbstractSimulator):
-
     model: Atomic
 
     def __init__(self, model: Atomic, clock: SimulationClock,
@@ -130,7 +130,6 @@ class Simulator(AbstractSimulator):
 
 
 class Coordinator(AbstractSimulator):
-
     model: Coupled
 
     def __init__(self, model: Coupled, clock: SimulationClock = None, flatten: bool = False,
@@ -330,6 +329,28 @@ class Coordinator(AbstractSimulator):
             self.clear()
             self.clock.time = self.time_next
 
+    def simulate_rt(self, time_interv: float = 10000):
+        """
+        Simulates the behavior of a DEVS model in real time over a specified time interval.
+
+        :param time_interv: The time interval to simulate, in seconds. Default is 10000.
+        :type time_interv: float
+        """
+        self.clock.time = self.time_next
+        tf = self.clock.time + time_interv
+
+        while self.clock.time < tf:
+            self.lambdaf()
+            self.deltfcn()
+            self._execute_transducers()
+            self.clear()
+            if self.time_next < float("inf"):
+                #  sleep_time = self.time_next-self.clock.time
+                #   print(">>> {}".format(sleep_time))
+                #   time.sleep(sleep_time)
+                time.sleep(self.time_next - self.clock.time)
+            self.clock.time = self.time_next
+
     def simulate_inf(self):
         while True:
             self.lambdaf()
@@ -390,7 +411,6 @@ class ParallelCoordinator(Coordinator):
 
 
 class ParallelProcessCoordinator(Coordinator):
-
     coordinators: list[ParallelProcessCoordinator]
 
     def __init__(self, model: Coupled, clock: SimulationClock = None,
