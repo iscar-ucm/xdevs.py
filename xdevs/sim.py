@@ -340,15 +340,21 @@ class Coordinator(AbstractSimulator):
         tf = self.clock.time + time_interv
 
         while self.clock.time < tf:
+            t_b = self.clock.time   # time before executing lambdas and deltas
             self.lambdaf()
             self.deltfcn()
             self._execute_transducers()
             self.clear()
-            if self.time_next < float("inf"):
+            t_a = self.clock.time   # time after executing lambdas and deltas
+            if self.time_next < float("inf") and (self.time_next - self.clock.time - t_a + t_b > 0):
+                # Infinite time is not allowed.
+                # Negative time is not allowed. If lambdas and deltas' time is large.
+
                 #  sleep_time = self.time_next-self.clock.time
                 #   print(">>> {}".format(sleep_time))
                 #   time.sleep(sleep_time)
-                time.sleep(self.time_next - self.clock.time)
+                time.sleep(self.time_next - self.clock.time - t_a + t_b)
+                # - (t_a-t_b)  = - t_a + t_b .In order to subtract the time it took to execute lambdas and deltas
             self.clock.time = self.time_next
 
     def simulate_inf(self):
