@@ -133,3 +133,6 @@ dmypy.json
 
 #MacOS stuff
 .DS_Store
+
+# Log File
+xdevs/examples/basic/SimulationLogs

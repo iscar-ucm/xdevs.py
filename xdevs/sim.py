@@ -4,6 +4,7 @@ import _thread
 import itertools
 import pickle
 import time
+import logging
 
 from abc import ABC, abstractmethod
 from collections import defaultdict
@@ -152,6 +153,21 @@ class Coordinator(AbstractSimulator):
             # Root coordinator ignores them, as it is in charge of building them in _build_hierarchy
             self.event_transducers_mapping = event_transducers_mapping
             self.state_transducers_mapping = state_transducers_mapping
+
+        # A log named logger is created. Logs will be sent to the file SimulationsLogs.log. The file can be find in
+        # xdevs/examples/basic/
+
+        self.logger = logging.getLogger("Simulation_Coordinator")
+
+        fh = logging.FileHandler("SimulationLogs.log", mode='w')  # for overwrite the file add mode='w'
+
+        self.logger.setLevel(logging.DEBUG)
+
+        formatter = logging.Formatter('%(asctime)s %(name)s - %(levelname)s - %(message)s')
+
+        fh.setFormatter(formatter)
+
+        self.logger.addHandler(fh)
 
     @property
     def root_coordinator(self) -> bool:
@@ -329,32 +345,51 @@ class Coordinator(AbstractSimulator):
             self.clear()
             self.clock.time = self.time_next
 
-    def simulate_rt(self, time_interv: float = 10000):
+    def simulate_rt(self, time_interv: float = 10000, max_delay: float = 10):
         """
         Simulates the behavior of a DEVS model in real time over a specified time interval.
 
         :param time_interv: The time interval to simulate, in seconds. Default is 10000.
         :type time_interv: float
+
+        :param max_delay : Maximun time the system can be delayed. Default is 10 s
+        :type max_delay: float
+
         """
+        self.logger.debug('Starting simulation_rt')
+
         self.clock.time = self.time_next
         tf = self.clock.time + time_interv
+        total_delayed_t = 0.0
+        t_b = time.time()  # initial time before executing lambdas and deltas
 
         while self.clock.time < tf:
-            t_b = self.clock.time   # time before executing lambdas and deltas
             self.lambdaf()
             self.deltfcn()
             self._execute_transducers()
             self.clear()
-            t_a = self.clock.time   # time after executing lambdas and deltas
-            if self.time_next < float("inf") and (self.time_next - self.clock.time - t_a + t_b > 0):
-                # Infinite time is not allowed.
-                # Negative time is not allowed. If lambdas and deltas' time is large.
+            t_a = time.time()  # time after executing lambdas and deltas
+            t_elapsed = t_a - t_b  # time elapsed between the deltas and lambdas execution
 
-                #  sleep_time = self.time_next-self.clock.time
-                #   print(">>> {}".format(sleep_time))
-                #   time.sleep(sleep_time)
-                time.sleep(self.time_next - self.clock.time - t_a + t_b)
-                # - (t_a-t_b)  = - t_a + t_b .In order to subtract the time it took to execute lambdas and deltas
+            sleep = self.time_next - self.clock.time
+            if self.time_next < float("inf"):
+                # Infinite time is not allowed.
+                if sleep < t_elapsed:
+                    delayed_t = t_elapsed - sleep
+                    total_delayed_t += delayed_t
+                    if total_delayed_t > max_delay:
+                        raise RuntimeError('ERROR: to much delayed time ')
+
+                    sleep = 0
+                else:
+                    sleep -= t_elapsed
+                    if total_delayed_t > 0:
+                        sleep = max(0, sleep - total_delayed_t)
+                        total_delayed_t = max(0, total_delayed_t-sleep)
+
+                time.sleep(sleep)
+                t_b = time.time()
+
             self.clock.time = self.time_next
 
     def simulate_inf(self):
