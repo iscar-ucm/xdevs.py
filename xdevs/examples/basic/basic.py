@@ -1,5 +1,5 @@
 import logging
-import time
+
 
 from xdevs import PHASE_ACTIVE, PHASE_PASSIVE, get_logger
 from xdevs.models import Atomic, Coupled, Port

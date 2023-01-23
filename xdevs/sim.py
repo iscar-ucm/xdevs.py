@@ -345,22 +345,24 @@ class Coordinator(AbstractSimulator):
             self.clear()
             self.clock.time = self.time_next
 
-    def simulate_rt(self, time_interv: float = 10000, max_delay: float = 10):
+    def simulate_rt(self, time_interv: float = 10000, max_delay: float = 0.01, time_scale: float = 1/10):
         """
         Simulates the behavior of a DEVS model in real time over a specified time interval.
 
         :param time_interv: The time interval to simulate, in seconds. Default is 10000.
         :type time_interv: float
 
-        :param max_delay : Maximun time the system can be delayed. Default is 10 s
+        :param max_delay : Maximum time the system can be delayed. Default is 10 ms
         :type max_delay: float
 
-        """
-        self.logger.debug('Starting simulation_rt')
+        :param time_scale: It defines an escale for increasing or decreasing the simulated time. Default is 1 ms
+        :type time_scale: float
 
+        """
         self.clock.time = self.time_next
         tf = self.clock.time + time_interv
         total_delayed_t = 0.0
+        sleep = 0.0
         t_b = time.time()  # initial time before executing lambdas and deltas
 
         while self.clock.time < tf:
@@ -368,29 +370,30 @@ class Coordinator(AbstractSimulator):
             self.deltfcn()
             self._execute_transducers()
             self.clear()
-            t_a = time.time()  # time after executing lambdas and deltas
-            t_elapsed = t_a - t_b  # time elapsed between the deltas and lambdas execution
 
-            sleep = self.time_next - self.clock.time
             if self.time_next < float("inf"):
                 # Infinite time is not allowed.
-                if sleep < t_elapsed:
-                    delayed_t = t_elapsed - sleep
-                    total_delayed_t += delayed_t
+
+                t_a = time.time()  # time after executing lambdas and deltas
+                t_elapsed = t_a - t_b  # time elapsed between the deltas and lambdas execution
+                sleep = (self.time_next - self.clock.time) * time_scale - t_elapsed - total_delayed_t
+
+                if sleep < 0:
+                    # A negative value of sleep implies to much t_elapsed
+                    total_delayed_t = -sleep
+                    # The delayed_time is updated to -sleep. (- sleep is the exceed time)
+                    # The max_delay criteria is checked
                     if total_delayed_t > max_delay:
                         raise RuntimeError('ERROR: to much delayed time ')
-
+                    # Having delayed_time implies that sleep must be 0
                     sleep = 0
                 else:
-                    sleep -= t_elapsed
-                    if total_delayed_t > 0:
-                        sleep = max(0, sleep - total_delayed_t)
-                        total_delayed_t = max(0, total_delayed_t-sleep)
+                    # Sleep is positive. t_elapsed and delayed_time are small. Everything go well
+                    total_delayed_t = 0
 
-                time.sleep(sleep)
-                t_b = time.time()
-
+            time.sleep(sleep)
             self.clock.time = self.time_next
+            t_b = time.time()
 
     def simulate_inf(self):
         while True:
