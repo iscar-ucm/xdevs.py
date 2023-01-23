@@ -345,7 +345,7 @@ class Coordinator(AbstractSimulator):
             self.clear()
             self.clock.time = self.time_next
 
-    def simulate_rt(self, time_interv: float = 10000, max_delay: float = 0.01, time_scale: float = 1/10):
+    def simulate_rt(self, time_interv: float = 10000, max_delay: float = 0.01, time_scale: float = 1):
         """
         Simulates the behavior of a DEVS model in real time over a specified time interval.
 
@@ -355,7 +355,7 @@ class Coordinator(AbstractSimulator):
         :param max_delay : Maximum time the system can be delayed. Default is 10 ms
         :type max_delay: float
 
-        :param time_scale: It defines an escale for increasing or decreasing the simulated time. Default is 1 ms
+        :param time_scale: Scale for increasing or decreasing the simulated time. Default is 1 s (i.e. no scale)
         :type time_scale: float
 
         """
@@ -385,13 +385,11 @@ class Coordinator(AbstractSimulator):
                     # The max_delay criteria is checked
                     if total_delayed_t > max_delay:
                         raise RuntimeError('ERROR: to much delayed time ')
-                    # Having delayed_time implies that sleep must be 0
-                    sleep = 0
                 else:
                     # Sleep is positive. t_elapsed and delayed_time are small. Everything go well
                     total_delayed_t = 0
-
-            time.sleep(sleep)
+                    time.sleep(sleep)
+                   
             self.clock.time = self.time_next
             t_b = time.time()
 
