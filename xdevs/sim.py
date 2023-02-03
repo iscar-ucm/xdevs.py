@@ -3,13 +3,15 @@ from __future__ import annotations
 import _thread
 import itertools
 import pickle
-import time
 import logging
+import threading
+import queue
+import time as rt_time
 
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from concurrent import futures
-from typing import Generator
+from typing import Callable, Generator
 from xmlrpc.server import SimpleXMLRPCServer
 
 from xdevs import INFINITY
@@ -345,53 +347,62 @@ class Coordinator(AbstractSimulator):
             self.clear()
             self.clock.time = self.time_next
 
-    def simulate_rt(self, time_interv: float = 10000, max_delay: float = 0.01, time_scale: float = 1):
+    def simulate_rt(self, time_interv: float = 10000, max_delay: float = 0.01,
+                    time_scale: float = 1, event_handler: Callable[[queue.SimpleQueue], None] = None):
         """
         Simulates the behavior of a DEVS model in real time over a specified time interval.
 
         :param time_interv: The time interval to simulate, in seconds. Default is 10000.
-        :type time_interv: float
-
         :param max_delay : Maximum time the system can be delayed. Default is 10 ms
-        :type max_delay: float
-
         :param time_scale: Scale for increasing or decreasing the simulated time. Default is 1 s (i.e. no scale)
-        :type time_scale: float
-
+        :param event_handler: external event handler function.
+                              If set, a thread will execute the function to inject external messages
         """
-        self.clock.time = self.time_next
+        self.clock.time = 0
         tf = self.clock.time + time_interv
-        total_delayed_t = 0.0
-        sleep = 0.0
-        t_b = time.time()  # initial time before executing lambdas and deltas
 
+        q = queue.SimpleQueue()
+        if event_handler is not None:
+            t = threading.Thread(target=event_handler, daemon=True, args=[q])
+            t.start()
+
+        sleep = self.time_next * time_scale
+
+        t_before = rt_time.time()  # real time before executing lambdas and deltas
+        t_after = t_before      # real time after executing lambdas and deltas
+        total_delayed_t = 0.0   # delay compensation buffer
         while self.clock.time < tf:
-            self.lambdaf()
+            # FIRST WE COMPUTE SLEEP TIME
+            v_sleep = (self.time_next - self.clock.time)  # virtual sleep time
+            r_sleep = v_sleep * time_scale - (t_after - t_before) - total_delayed_t  # real sleep time
+            # THEN WE CHECK THAT DELAY IS NOT TOO BAD
+            if r_sleep < 0:
+                total_delayed_t = -sleep
+                if total_delayed_t > max_delay:  # too much delay -> stop execution
+                    raise RuntimeError('ERROR: to much delayed time ')
+            else:  # Sleep is positive. time elapsed and delayed_time are small. Everything went well
+                total_delayed_t = 0
+            # TIME TO SLEEP/WAIT FOR EXTERNAL MESSAGES
+            try:
+                port_name, msg = q.get(timeout=r_sleep)  # get message with timeout
+                self.model.get_in_port(port_name).add(msg)
+                # re-compute virtual sleep time
+                v_sleep = min(v_sleep, (rt_time.time() - t_after) / time_scale)
+            except queue.Empty:
+                pass
+            # UPDATE SIMULATION CLOCK AND STORE TIME BEFORE NEXT CYCLE
+            self.clock.time += v_sleep
+            t_before = rt_time.time()
+            # EXECUTE NEXT CYCLE
+            if self.clock.time == self.time_next:  # now lambdas are optional
+                self.lambdaf()
             self.deltfcn()
             self._execute_transducers()
             self.clear()
+            # STORE TIME AFTER THE CYCLE
+            t_after = rt_time.time()  # time after executing lambdas and deltas
+        print("done")
 
-            if self.time_next < float("inf"):
-                # Infinite time is not allowed.
-
-                t_a = time.time()  # time after executing lambdas and deltas
-                t_elapsed = t_a - t_b  # time elapsed between the deltas and lambdas execution
-                sleep = (self.time_next - self.clock.time) * time_scale - t_elapsed - total_delayed_t
-
-                if sleep < 0:
-                    # A negative value of sleep implies to much t_elapsed
-                    total_delayed_t = -sleep
-                    # The delayed_time is updated to -sleep. (- sleep is the exceed time)
-                    # The max_delay criteria is checked
-                    if total_delayed_t > max_delay:
-                        raise RuntimeError('ERROR: to much delayed time ')
-                else:
-                    # Sleep is positive. t_elapsed and delayed_time are small. Everything go well
-                    total_delayed_t = 0
-                    time.sleep(sleep)
-                   
-            self.clock.time = self.time_next
-            t_b = time.time()
 
     def simulate_inf(self):
         while True:
