@@ -366,18 +366,19 @@ class Coordinator(AbstractSimulator):
             t = threading.Thread(target=event_handler, daemon=True, args=[q])
             t.start()
 
-        sleep = self.time_next * time_scale
-
         t_before = rt_time.time()  # real time before executing lambdas and deltas
         t_after = t_before      # real time after executing lambdas and deltas
         total_delayed_t = 0.0   # delay compensation buffer
         while self.clock.time < tf:
+            if event_handler is None and self.time_next == float("inf"):
+                print("infinity reached and no event handler configured")
+                break;
             # FIRST WE COMPUTE SLEEP TIME
             v_sleep = (self.time_next - self.clock.time)  # virtual sleep time
             r_sleep = v_sleep * time_scale - (t_after - t_before) - total_delayed_t  # real sleep time
             # THEN WE CHECK THAT DELAY IS NOT TOO BAD
             if r_sleep < 0:
-                total_delayed_t = -sleep
+                total_delayed_t = -r_sleep
                 if total_delayed_t > max_delay:  # too much delay -> stop execution
                     raise RuntimeError('ERROR: to much delayed time ')
             else:  # Sleep is positive. time elapsed and delayed_time are small. Everything went well
@@ -385,14 +386,14 @@ class Coordinator(AbstractSimulator):
             # TIME TO SLEEP/WAIT FOR EXTERNAL MESSAGES
             try:
                 port_name, msg = q.get(timeout=r_sleep)  # get message with timeout
+                t_before = rt_time.time()
                 self.model.get_in_port(port_name).add(msg)
                 # re-compute virtual sleep time
-                v_sleep = min(v_sleep, (rt_time.time() - t_after) / time_scale)
+                v_sleep = min(v_sleep, (t_before - t_after) / time_scale)
             except queue.Empty:
-                pass
+                t_before = rt_time.time()
             # UPDATE SIMULATION CLOCK AND STORE TIME BEFORE NEXT CYCLE
             self.clock.time += v_sleep
-            t_before = rt_time.time()
             # EXECUTE NEXT CYCLE
             if self.clock.time == self.time_next:  # now lambdas are optional
                 self.lambdaf()
@@ -402,7 +403,6 @@ class Coordinator(AbstractSimulator):
             # STORE TIME AFTER THE CYCLE
             t_after = rt_time.time()  # time after executing lambdas and deltas
         print("done")
-
 
     def simulate_inf(self):
         while True:
