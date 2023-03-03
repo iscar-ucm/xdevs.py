@@ -360,7 +360,6 @@ class Coordinator(AbstractSimulator):
         """
         self.clock.time = 0
         tf = self.clock.time + time_interv
-
         q = queue.SimpleQueue()
         if event_handler is not None:
             t = threading.Thread(target=event_handler, daemon=True, args=[q])
@@ -372,13 +371,14 @@ class Coordinator(AbstractSimulator):
         while self.clock.time < tf:
             if event_handler is None and self.time_next == float("inf"):
                 print("infinity reached and no event handler configured")
-                break;
+                break
             # FIRST WE COMPUTE SLEEP TIME
             v_sleep = (self.time_next - self.clock.time)  # virtual sleep time
             r_sleep = v_sleep * time_scale - (t_after - t_before) - total_delayed_t  # real sleep time
             # THEN WE CHECK THAT DELAY IS NOT TOO BAD
             if r_sleep < 0:
                 total_delayed_t = -r_sleep
+                r_sleep = 0
                 if total_delayed_t > max_delay:  # too much delay -> stop execution
                     raise RuntimeError('ERROR: to much delayed time ')
             else:  # Sleep is positive. time elapsed and delayed_time are small. Everything went well
@@ -387,13 +387,22 @@ class Coordinator(AbstractSimulator):
             try:
                 port_name, msg = q.get(timeout=r_sleep)  # get message with timeout
                 t_before = rt_time.time()
+                print('####')
+                print(port_name)
+                print(self.model.get_in_port(port_name))
+                print(msg)
                 self.model.get_in_port(port_name).add(msg)
                 # re-compute virtual sleep time
+                print(f' <<< v_sleep = {v_sleep}')
+                print(f' <<< (t_b - t_a) / t_scale = {(t_before - t_after) / time_scale}')
                 v_sleep = min(v_sleep, (t_before - t_after) / time_scale)
+
             except queue.Empty:
                 t_before = rt_time.time()
             # UPDATE SIMULATION CLOCK AND STORE TIME BEFORE NEXT CYCLE
+            print(f' <<< clock.time = {self.clock.time}')
             self.clock.time += v_sleep
+            print(f' <<< clock.time = {self.clock.time}')
             # EXECUTE NEXT CYCLE
             if self.clock.time == self.time_next:  # now lambdas are optional
                 self.lambdaf()

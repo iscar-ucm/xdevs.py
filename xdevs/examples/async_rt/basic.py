@@ -1,12 +1,14 @@
 import logging
 import queue
-import time
+import time as rt_time
 
 from xdevs import PHASE_ACTIVE, PHASE_PASSIVE, get_logger
 from xdevs.models import Atomic, Coupled, Port
+from xdevs.plugins.managers.rt_manager import RtManager
+from xdevs.simRt.CoordRt import CoordinatorRt
 from xdevs.sim import Coordinator
 
-logger = get_logger(__name__, logging.DEBUG)
+logger = get_logger(__name__, logging.WARNING)
 
 PHASE_DONE = "done"
 
@@ -144,13 +146,13 @@ class Transducer(Atomic):
 
         if self.phase == PHASE_ACTIVE:
             for job in self.i_arrived.values:
-                logger.info("Starting job %s @ t = %d" % (job.name, self.clock))
+                logger.info("Starting job %s @ t = %d @ t_r = %f" % (job.name, self.clock, rt_time.time()))
                 job.time = self.clock
                 self.jobs_arrived.append(job)
 
             if self.i_solved:
                 job = self.i_solved.get()
-                logger.info("Job %s finished @ t = %d" % (job.name, self.clock))
+                logger.info("Job %s finished @ t = %d @ t_r = %f" % (job.name, self.clock, rt_time.time()))
                 self.total_ta += self.clock - job.time
                 self.jobs_solved.append(job)
 
@@ -194,7 +196,7 @@ class RTGpt(Coupled):
 def inject_messages(q: queue.SimpleQueue):
     i = -1
     while True:
-        time.sleep(5)  # duermo 5 segundos
+        rt_time.sleep(3)  # duermo x segundos
         # la cola espera tuplas (port_name, msg)
         q.put(("i_extern", Job(i)))
         i -= 1
@@ -202,6 +204,24 @@ def inject_messages(q: queue.SimpleQueue):
 
 if __name__ == '__main__':
     gpt = RTGpt("gpt", 2, 100)
+
+    manager = RtManager(time_scale=1, max_delay=0.01)
+    manager.add_event_handler(inject_messages)
+
+    c = CoordinatorRt(gpt, manager)
+    c.initialize()
+    t_ini = rt_time.time()
+    print(f' >>> COMENZAMOS : {t_ini}')
+    c.executeTEMP(time_interv=20)
+    print(f' >>> FIN : {rt_time.time()}')
+    print(f' Tiempo ejecutado = {rt_time.time()-t_ini}')
+
+"""
     coord = Coordinator(gpt)
     coord.initialize()
+    t_ini = rt_time.time()
+    print(f' >>> COMENZAMOS : {t_ini}')
     coord.simulate_rt(time_interv=20, event_handler=inject_messages)
+    print(f' >>> FIN : {rt_time.time()}')
+    print(f' Tiempo ejecutado = {rt_time.time()-t_ini}')
+"""
