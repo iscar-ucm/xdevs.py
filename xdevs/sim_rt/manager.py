@@ -1,27 +1,20 @@
 import queue
 import threading
-from abc import ABC, abstractmethod
 from typing import Callable, Any
 
 
-class ManagerRt(ABC):
+class AbstractRTManager:
     def __init__(self, **kwargs):
         self.last_v_time: float = 0
-        self.time_scale: float = kwargs.get('time_scale')  # TODO
-        self.max_delay: float = kwargs.get('max_delay')  # TODO
-        if self.max_delay < 0:
-            raise Exception('Negative delay is not valid.')
         self.event_handlers = list()
         self.threads = list()
         # self.event_handler: Callable[[queue.SimpleQueue], None] = kwargs.get('event_handler')
-
         self.queue = queue.SimpleQueue()
 
     # todo hacer clase event_handler
     def add_event_handler(self, handler: Callable[[queue.SimpleQueue], None]):
         self.event_handlers.append(handler)
 
-    @abstractmethod
     def sleep(self, t_until: float) -> tuple[float, list[tuple[Any, Any]]]:
         """
         Simulates the time of the simulation of the DEVS model.
@@ -29,12 +22,15 @@ class ManagerRt(ABC):
         It returns a float that will be the time until it actually slept.
         It returns a [], that contains the port_name and the msg.
         """
-        pass
+        self.last_v_time = t_until
+        return self.last_v_time, []
 
-    def initialize(self):
+    def initialize(self, initial_t: float):
         """ Executes any required action before starting simulation. """
-        if self.event_handlers is None:  # TODO
-            raise Exception('No handlers available.')
+        # TODO
+        # if self.event_handlers is None:
+        #   raise Exception('No handlers available.')
+        self.last_v_time = initial_t
         for handler in self.event_handlers:
             t = threading.Thread(daemon=True, target=handler, args=[self.queue])
             t.start()

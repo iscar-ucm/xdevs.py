@@ -1,13 +1,14 @@
 import queue
 import time as rt_time
 from xdevs.models import Coupled
+from xdevs.plugins.managers.rt_manager import RtManager
 from xdevs.sim import Coordinator
-from xdevs.simRt.ManagerRt import ManagerRt
+from xdevs.sim_rt.ManagerRt import AbstractRTManager
 
 
 class CoordinatorRt(Coordinator):
 
-    def __init__(self, model: Coupled, manager: ManagerRt):
+    def __init__(self, model: Coupled, manager: RtManager):
         super().__init__(model)
 
         self.manager = manager
@@ -16,7 +17,7 @@ class CoordinatorRt(Coordinator):
 
     def initialize(self):
         super().initialize()
-        self.manager.initialize()
+        self.manager.initialize(self.clock.time)
 
     def simulate(self, time_interv: float = 10000):
         """
@@ -62,19 +63,15 @@ class CoordinatorRt(Coordinator):
         print("done")
 
     def executeTEMP(self, time_interv: float = 10000):
-        t_a_sleep = 0
         self.clock.time = 0
 
         while self.clock.time < time_interv:
             if self.time_next == float("inf"):  # comprobacion del evento_handler
+                print(self.time_next)
                 print("infinity reached and no event handler configured")
                 break
-
             t_sleep = self.time_next - self.clock.time
-            #print(f' <<< t_sleep = {t_sleep}')
-            slept, msgs = self.manager.sleep(t_sleep)
-            t_b_sleep = rt_time.time()
-            #print(f' <->-<-> Tiempo b m & deltas = {t_b_sleep}')
+            slept, msgs = self.manager.new_sleep(self.time_next)
             for m in msgs:
                 port = self.model.get_in_port(m[0])
                 if port is not None:
@@ -84,23 +81,10 @@ class CoordinatorRt(Coordinator):
                         print(f'{e}')
                 else:
                     print(f'{m[0]} does not exit')
-                #print('## ACTUALIZAR V_TIME msgs ##')
-                #print(f't_sleep = {t_sleep} , slept/t_scale = {slept / self.time_scale}')
-                t_sleep = min(t_sleep, slept / self.time_scale)
+                slept = min(t_sleep, slept)
 
-
-
-                # Actualizar tiempo
-
-            #print('## ACTUALIZAR V_TIME ##')
-            #print(f't_sleep = {t_sleep} , slept/t_scale = {slept/self.time_scale}')
-            #print(f' <<< t_sleep actualizado? = {t_sleep}')
             # UPDATE SIMULATION CLOCK
-            #print(f' <<< clock.time = {self.clock.time}')
-            self.clock.time += t_sleep
-            # OJO -> ESTO SOLO SERA VALIDO SI EL MANAGER ES V_MANAGER.
-            #print(f' <<< clock.time = {self.clock.time}')
-
+            self.clock.time = slept
             # EXECUTE NEXT CYCLE
             if self.clock.time == self.time_next:  # now lambdas are optional
                 self.lambdaf()
@@ -108,5 +92,4 @@ class CoordinatorRt(Coordinator):
             self._execute_transducers()
             self.clear()
 
-            t_a_sleep = rt_time.time()
-            #print(f' <->-<-> Tiempo a m & deltas = {t_a_sleep}')
+        self.manager.exit(self.clock.time)
