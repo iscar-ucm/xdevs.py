@@ -4,7 +4,7 @@ import logging
 from xdevs import PHASE_ACTIVE, PHASE_PASSIVE, get_logger
 from xdevs.models import Atomic, Coupled, Port
 from xdevs.sim import Coordinator
-from xdevs.sim_rt import CoordinatorRt
+from xdevs.rt_sim import CoordinatorRt
 import time
 
 logger = get_logger(__name__, logging.DEBUG)

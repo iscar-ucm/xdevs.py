@@ -1,12 +1,13 @@
 import logging
 import queue
+import random
 import time as rt_time
 
 from xdevs import PHASE_ACTIVE, PHASE_PASSIVE, get_logger
 from xdevs.models import Atomic, Coupled, Port
-from xdevs.plugins.managers.rt_manager import RtManager
-from xdevs.simRt.CoordRt import CoordinatorRt
-from xdevs.sim import Coordinator
+from xdevs.rt_sim.rt_manager import RtManager
+from xdevs.rt_sim.rt_coord import CoordinatorRt
+
 
 logger = get_logger(__name__, logging.WARNING)
 
@@ -196,25 +197,32 @@ class RTGpt(Coupled):
 def inject_messages(q: queue.SimpleQueue):
     i = -1
     while True:
-        rt_time.sleep(3)  # duermo x segundos
+        f = round(random.gauss(3, 0.6), 2)
+        rt_time.sleep(f * time_scale)  # duermo f segundos
         # la cola espera tuplas (port_name, msg)
         q.put(("i_extern", Job(i)))
         i -= 1
 
 
 if __name__ == '__main__':
-    gpt = RTGpt("gpt", 2, 100)
+    execution_time = 30
+    time_scale = 1
+    max_delay = 0.02
 
-    manager = RtManager(time_scale=1, max_delay=0.01)
+    gpt = RTGpt("gpt", 2, 3600)
+
+    manager = RtManager(time_scale=time_scale, max_delay=max_delay)
     manager.add_event_handler(inject_messages)
 
     c = CoordinatorRt(gpt, manager)
     c.initialize()
     t_ini = rt_time.time()
     print(f' >>> COMENZAMOS : {t_ini}')
-    c.executeTEMP(time_interv=20)
+    c.simulate(time_interv=execution_time)
     print(f' >>> FIN : {rt_time.time()}')
-    print(f' Tiempo ejecutado = {rt_time.time()-t_ini}')
+    print(f' Tiempo ejecutado = {(rt_time.time() - t_ini)}')
+    print(f' error execution_time = '
+          f'{((rt_time.time() - t_ini - (execution_time * time_scale)) / (execution_time * time_scale)) * 100}')
 
 """
     coord = Coordinator(gpt)
