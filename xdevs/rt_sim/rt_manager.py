@@ -56,8 +56,8 @@ class RealTimeManager:
         events: list[tuple[str, Any]] = list()
         try:
             events.append(self.queue.get(timeout=max(next_r_time - time.time(), 0)))  # first event has timeout
-            #while not self.queue.empty():  # if we reach this point, we make sure that we leave the queue empty
-            #    events.append(self.queue.get())
+            while not self.queue.empty():  # if we reach this point, we make sure that we leave the queue empty
+                events.append(self.queue.get())
             r_time = min(next_r_time, time.time())
             v_time = (r_time - self.initial_r_time) / self.time_scale
             self.last_v_time = v_time
