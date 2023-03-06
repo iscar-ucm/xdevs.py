@@ -4,14 +4,11 @@ import _thread
 import itertools
 import pickle
 import logging
-import threading
-import queue
-import time as rt_time
 
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from concurrent import futures
-from typing import Callable, Generator
+from typing import Generator
 from xmlrpc.server import SimpleXMLRPCServer
 
 from xdevs import INFINITY
@@ -346,72 +343,6 @@ class Coordinator(AbstractSimulator):
             self._execute_transducers()
             self.clear()
             self.clock.time = self.time_next
-
-    def simulate_rt(self, time_interv: float = 10000, max_delay: float = 0.01,
-                    time_scale: float = 1, event_handler: Callable[[queue.SimpleQueue], None] = None):
-        """
-        Simulates the behavior of a DEVS model in real time over a specified time interval.
-
-        :param time_interv: The time interval to simulate, in seconds. Default is 10000.
-        :param max_delay : Maximum time the system can be delayed. Default is 10 ms
-        :param time_scale: Scale for increasing or decreasing the simulated time. Default is 1 s (i.e. no scale)
-        :param event_handler: external event handler function.
-                              If set, a thread will execute the function to inject external messages
-        """
-        self.clock.time = 0
-        tf = self.clock.time + time_interv
-        q = queue.SimpleQueue()
-        if event_handler is not None:
-            t = threading.Thread(target=event_handler, daemon=True, args=[q])
-            t.start()
-
-        t_before = rt_time.time()  # real time before executing lambdas and deltas
-        t_after = t_before      # real time after executing lambdas and deltas
-        total_delayed_t = 0.0   # delay compensation buffer
-        while self.clock.time < tf:
-            if event_handler is None and self.time_next == float("inf"):
-                print("infinity reached and no event handler configured")
-                break
-            # FIRST WE COMPUTE SLEEP TIME
-            v_sleep = (self.time_next - self.clock.time)  # virtual sleep time
-            r_sleep = v_sleep * time_scale - (t_after - t_before) - total_delayed_t  # real sleep time
-            # THEN WE CHECK THAT DELAY IS NOT TOO BAD
-            if r_sleep < 0:
-                total_delayed_t = -r_sleep
-                r_sleep = 0
-                if total_delayed_t > max_delay:  # too much delay -> stop execution
-                    raise RuntimeError('ERROR: to much delayed time ')
-            else:  # Sleep is positive. time elapsed and delayed_time are small. Everything went well
-                total_delayed_t = 0
-            # TIME TO SLEEP/WAIT FOR EXTERNAL MESSAGES
-            try:
-                port_name, msg = q.get(timeout=r_sleep)  # get message with timeout
-                t_before = rt_time.time()
-                print('####')
-                print(port_name)
-                print(self.model.get_in_port(port_name))
-                print(msg)
-                self.model.get_in_port(port_name).add(msg)
-                # re-compute virtual sleep time
-                print(f' <<< v_sleep = {v_sleep}')
-                print(f' <<< (t_b - t_a) / t_scale = {(t_before - t_after) / time_scale}')
-                v_sleep = min(v_sleep, (t_before - t_after) / time_scale)
-
-            except queue.Empty:
-                t_before = rt_time.time()
-            # UPDATE SIMULATION CLOCK AND STORE TIME BEFORE NEXT CYCLE
-            print(f' <<< clock.time = {self.clock.time}')
-            self.clock.time += v_sleep
-            print(f' <<< clock.time = {self.clock.time}')
-            # EXECUTE NEXT CYCLE
-            if self.clock.time == self.time_next:  # now lambdas are optional
-                self.lambdaf()
-            self.deltfcn()
-            self._execute_transducers()
-            self.clear()
-            # STORE TIME AFTER THE CYCLE
-            t_after = rt_time.time()  # time after executing lambdas and deltas
-        print("done")
 
     def simulate_inf(self):
         while True:
