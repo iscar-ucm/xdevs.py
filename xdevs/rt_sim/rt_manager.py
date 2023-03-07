@@ -12,6 +12,7 @@ class RealTimeManager:
         TODO documentation
         :param max_jitter:
         :param time_scale:
+        :param msg_window:
         """
         if max_jitter is not None and max_jitter < 0:
             raise ValueError('negative maximum jitter is not valid.')
@@ -19,6 +20,9 @@ class RealTimeManager:
         if time_scale <= 0:
             raise ValueError('negative or zero time_scale is not valid.')
         self.time_scale: float = time_scale
+        #if msg_window is not None and msg_window < 0:
+        #    raise ValueError('negative msg window is not valid.')
+        self.msg_window: float = 0.3 #msg_window
 
         self.initial_r_time: float = 0
         self.last_r_time: float = 0
@@ -56,8 +60,19 @@ class RealTimeManager:
         events: list[tuple[str, Any]] = list()
         try:
             events.append(self.queue.get(timeout=max(next_r_time - time.time(), 0)))  # first event has timeout
-            while not self.queue.empty():  # if we reach this point, we make sure that we leave the queue empty
-                events.append(self.queue.get())
+            #while not self.queue.empty():  # if we reach this point, we make sure that we leave the queue empty
+            #    events.append(self.queue.get())
+
+            window = min(self.msg_window, max(next_r_time - time.time(), 0))
+            while window > 0:
+                t_ini = time.time()
+                try:
+                    events.append(self.queue.get(timeout=window))
+                    window = max(0, min(window - (time.time() - t_ini), next_r_time - time.time()))
+                except queue.Empty:
+                    # A msg was not found during window time -> window = 0
+                    window = 0
+
             r_time = min(next_r_time, time.time())
             v_time = (r_time - self.initial_r_time) / self.time_scale
             self.last_v_time = v_time

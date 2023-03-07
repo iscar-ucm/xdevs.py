@@ -197,6 +197,7 @@ def inject_messages(q: queue.SimpleQueue):
     i = -1
     while True:
         f = round(random.gauss(3, 0.6), 2)
+        f = 3
         time.sleep(f)  # duermo f segundos
         # la cola espera tuplas (port_name, msg)
         q.put(("i_extern", Job(i)))
@@ -204,7 +205,7 @@ def inject_messages(q: queue.SimpleQueue):
 
 
 if __name__ == '__main__':
-    execution_time = 60
+    execution_time = 30
     time_scale = 1
     max_jitter = 0.2
 
