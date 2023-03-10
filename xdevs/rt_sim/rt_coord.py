@@ -19,7 +19,7 @@ class RealTimeCoordinator(Coordinator):
     def simulate(self, time_interv: float = 10000):
         self.initialize()
         while self.clock.time < time_interv:
-            if self.time_next == float("inf") and not self.manager.event_handlers:  # solo paramos si no hay handlers!
+            if self.time_next == float("inf") and not self.manager.input_handlers:  # solo paramos si no hay handlers!
                 print('infinity reached')
                 break
             t, msgs = self.manager.sleep(self.time_next)

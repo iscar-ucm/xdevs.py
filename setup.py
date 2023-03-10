@@ -13,6 +13,13 @@ setup(name='xdevs',
               'sql = xdevs.plugins.transducers.sql_transducer:SQLTransducer',
               'elasticsearch = xdevs.plugins.transducers.elasticsearch_transducer:ElasticsearchTransducer',
           ],
+
+          'xdevs.plugins.input_handlers': [
+
+              'function = xdevs.plugins.input_handlers.callable_function:CallableFunction',
+
+          ],
+
           'xdevs.plugins.wrappers': [
               'pypdevs = xdevs.plugins.wrappers.pypdevs:PyPDEVSWrapper'
           ]},

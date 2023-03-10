@@ -202,6 +202,9 @@ def inject_messages(q: queue.SimpleQueue):
         # la cola espera tuplas (port_name, msg)
         q.put(("i_extern", Job(i)))
         i -= 1
+        time.sleep(0.3)
+        q.put(("i_extern", Job(i)))
+        i -= 1
 
 
 if __name__ == '__main__':
@@ -211,8 +214,8 @@ if __name__ == '__main__':
 
     gpt = RTGpt("gpt", 2, 3600)
 
-    manager = RealTimeManager(max_jitter=max_jitter, time_scale=time_scale)
-    manager.add_event_handler(inject_messages)
+    manager = RealTimeManager(max_jitter=max_jitter, time_scale=time_scale, event_window=0.5)
+    manager.add_input_handler('function', function=inject_messages)
 
     c = RealTimeCoordinator(gpt, manager)
     #c.initialize() # ahora lo hago como parte de simulate

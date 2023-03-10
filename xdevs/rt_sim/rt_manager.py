@@ -1,18 +1,29 @@
 from __future__ import annotations
 
 import queue
+import sys
 import threading
 import time
 from typing import Callable, Any
 
+from xdevs.rt_sim.input_handler import InputHandler, InputHandlers
+
+def run_handler(i_handler: InputHandler):
+    i_handler.initialize()
+    try:
+        i_handler.run()
+    except Exception:
+        i_handler.exit()
+        sys.exit()
 
 class RealTimeManager:
     def __init__(self, max_jitter: float = None, time_scale: float = 1, event_window: float = 0):
         """
-        TODO documentation
-        :param max_jitter:
-        :param time_scale:
-        :param event_window:
+        The RealTimeManager is responsible for collecting external events and implement real time in the simulation.
+
+        :param max_jitter: Maximum delay time the system can absorb. Default is None (i.e., no jitter check)
+        :param time_scale: Scale for increasing or decreasing the simulated time. Default is 1 s (i.e., no scale)
+        :param event_window: Additional time is added to check for others events. Default is 0 (i.e., no window)
         """
         if max_jitter is not None and max_jitter < 0:
             raise ValueError('negative max_jitter is not valid.')
@@ -28,17 +39,20 @@ class RealTimeManager:
         self.last_r_time: float = 0
         self.last_v_time: float = 0
 
-        self.event_handlers = list()
+        self.input_handlers: list[InputHandler] = list()
         self.threads = list()
         self.queue = queue.SimpleQueue()
 
     # TODO hacer clases InputHandler y OutputHandler
-    def add_event_handler(self, handler: Callable[[queue.SimpleQueue], None]):
-        self.event_handlers.append(handler)
+    # handler será del tipo InputHandler
+    def add_input_handler(self, handler_id: str, **kwargs):
+        i_handler = InputHandlers.create_input_handler(handler_id, **kwargs, queue=self.queue)
+
+        self.input_handlers.append(i_handler)
 
     def initialize(self, initial_t: float):
-        for handler in self.event_handlers:
-            t = threading.Thread(daemon=True, target=handler, args=[self.queue])
+        for handler in self.input_handlers:
+            t = threading.Thread(daemon=True, target=run_handler, args=[handler])
             t.start()
             self.threads.append(t)
         self.last_v_time = initial_t
@@ -47,13 +61,10 @@ class RealTimeManager:
 
     def exit(self, final_t: float):
         self.last_v_time = final_t
-        # TODO llamar al método exit de los handlers
 
     def sleep(self, next_v_time: float) -> tuple[float, list[tuple[Any, Any]]]:
         """
         Simulates the time of the simulation of the DEVS model.
-        time will be the instant the manager must sleep at most.
-        It returns a float that will be the time until it actually slept.
         It returns a list that contains tuples with destination port name and the received msg.
         """
         next_r_time = self.last_r_time + (next_v_time - self.last_v_time) * self.time_scale
