@@ -4,6 +4,8 @@ import logging
 from xdevs import PHASE_ACTIVE, PHASE_PASSIVE, get_logger
 from xdevs.models import Atomic, Coupled, Port
 from xdevs.sim import Coordinator
+from xdevs.rt_sim import CoordinatorRt
+import time
 
 logger = get_logger(__name__, logging.DEBUG)
 
@@ -133,13 +135,13 @@ class Transducer(Atomic):
         if self.phase == PHASE_ACTIVE:
             if self.i_arrived:
                 job = self.i_arrived.get()
-                logger.info("Starting job %s @ t = %d" % (job.name, self.clock))
+                logger.info("Starting job %s @ t = %d @ t = %d" % (job.name, self.clock, time.time_ns()))
                 job.time = self.clock
                 self.jobs_arrived.append(job)
 
             if self.i_solved:
                 job = self.i_solved.get()
-                logger.info("Job %s finished @ t = %d" % (job.name, self.clock))
+                logger.info("Job %s finished @ t = %d @ t = %d" % (job.name, self.clock, time.time()))
                 self.total_ta += self.clock - job.time
                 self.jobs_solved.append(job)
 
@@ -185,8 +187,8 @@ class Wrap(Coupled):
 
 if __name__ == '__main__':
     gpt = Gpt("gpt", 2, 100)
-    coord = Coordinator(gpt)
+    coord = CoordinatorRt(gpt, 1, 0.10)
     coord.initialize()
     # coord.simulate()
-    coord.simulate_rt()
+    coord.simulate()
     # coord.simulate_rt(50)

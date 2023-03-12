@@ -1,12 +1,14 @@
 import logging
 import queue
+import random
 import time
 
 from xdevs import PHASE_ACTIVE, PHASE_PASSIVE, get_logger
 from xdevs.models import Atomic, Coupled, Port
-from xdevs.sim import Coordinator
+from xdevs.rt_sim import RealTimeCoordinator, RealTimeManager
 
-logger = get_logger(__name__, logging.DEBUG)
+
+logger = get_logger(__name__, logging.INFO)
 
 PHASE_DONE = "done"
 
@@ -144,13 +146,13 @@ class Transducer(Atomic):
 
         if self.phase == PHASE_ACTIVE:
             for job in self.i_arrived.values:
-                logger.info("Starting job %s @ t = %d" % (job.name, self.clock))
+                logger.info("Starting job %s @ t = %d @ t_r = %f" % (job.name, self.clock, time.time()))
                 job.time = self.clock
                 self.jobs_arrived.append(job)
 
             if self.i_solved:
                 job = self.i_solved.get()
-                logger.info("Job %s finished @ t = %d" % (job.name, self.clock))
+                logger.info("Job %s finished @ t = %d @ t_r = %f" % (job.name, self.clock, time.time()))
                 self.total_ta += self.clock - job.time
                 self.jobs_solved.append(job)
 
@@ -194,14 +196,34 @@ class RTGpt(Coupled):
 def inject_messages(q: queue.SimpleQueue):
     i = -1
     while True:
-        time.sleep(5)  # duermo 5 segundos
+        f = round(random.gauss(3, 0.6), 2)
+        f = 3
+        time.sleep(f)  # duermo f segundos
         # la cola espera tuplas (port_name, msg)
+        q.put(("i_extern", Job(i)))
+        i -= 1
+        time.sleep(0.3)
         q.put(("i_extern", Job(i)))
         i -= 1
 
 
 if __name__ == '__main__':
-    gpt = RTGpt("gpt", 2, 100)
-    coord = Coordinator(gpt)
-    coord.initialize()
-    coord.simulate_rt(time_interv=20, event_handler=inject_messages)
+    execution_time = 30
+    time_scale = 1
+    max_jitter = 0.2
+
+    gpt = RTGpt("gpt", 2, 3600)
+
+    manager = RealTimeManager(max_jitter=max_jitter, time_scale=time_scale, event_window=0.5)
+    manager.add_input_handler('function', function=inject_messages)
+
+    c = RealTimeCoordinator(gpt, manager)
+    #c.initialize() # ahora lo hago como parte de simulate
+    t_ini = time.time()
+    print(f' >>> COMENZAMOS : {t_ini}')
+    c.simulate(time_interv=execution_time)
+    print(f' >>> FIN : {time.time()}')
+    print(f' Tiempo a ejecutar (s) = {execution_time * time_scale}')
+    print(f' Tiempo ejecutado (s) = {(time.time() - t_ini)}')
+    print(f' Error (%) = '
+          f'{((time.time() - t_ini - (execution_time * time_scale)) / (execution_time * time_scale)) * 100}')
