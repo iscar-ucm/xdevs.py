@@ -7,7 +7,6 @@ from xdevs import PHASE_ACTIVE, PHASE_PASSIVE, get_logger
 from xdevs.models import Atomic, Coupled, Port
 from xdevs.rt_sim import RealTimeCoordinator, RealTimeManager
 
-
 logger = get_logger(__name__, logging.INFO)
 
 PHASE_DONE = "done"
@@ -197,28 +196,33 @@ def inject_messages(q: queue.SimpleQueue):
     i = -1
     while True:
         f = round(random.gauss(3, 0.6), 2)
-        f = 3
+        # f = 3
         time.sleep(f)  # duermo f segundos
         # la cola espera tuplas (port_name, msg)
         q.put(("i_extern", Job(i)))
         i -= 1
-        time.sleep(0.3)
-        q.put(("i_extern", Job(i)))
-        i -= 1
+        # test ventana manager
+        # time.sleep(0.3)
+        # q.put(("i_extern", Job(i)))
+        # i -= 1
 
 
 if __name__ == '__main__':
     execution_time = 30
     time_scale = 1
     max_jitter = 0.2
+    event_window = 0.5
 
     gpt = RTGpt("gpt", 2, 3600)
 
-    manager = RealTimeManager(max_jitter=max_jitter, time_scale=time_scale, event_window=0.5)
+    manager = RealTimeManager(max_jitter=max_jitter, time_scale=time_scale, event_window=event_window)
+
+    manager.add_input_handler('csv_handler', file="../../plugins/input_handlers/prueba.csv")
+
     manager.add_input_handler('function', function=inject_messages)
 
     c = RealTimeCoordinator(gpt, manager)
-    #c.initialize() # ahora lo hago como parte de simulate
+    # c.initialize() # ahora lo hago como parte de simulate
     t_ini = time.time()
     print(f' >>> COMENZAMOS : {t_ini}')
     c.simulate(time_interv=execution_time)

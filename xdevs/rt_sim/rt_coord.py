@@ -23,6 +23,7 @@ class RealTimeCoordinator(Coordinator):
                 print('infinity reached')
                 break
             t, msgs = self.manager.sleep(self.time_next)
+            print(f'¿msgs? = {msgs}')
             # INJECT EXTERNAL EVENTS
             for port_id, msg in msgs:
                 port = self.model.get_in_port(port_id)

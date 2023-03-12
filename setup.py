@@ -17,6 +17,7 @@ setup(name='xdevs',
           'xdevs.plugins.input_handlers': [
 
               'function = xdevs.plugins.input_handlers.callable_function:CallableFunction',
+              'csv_handler = xdevs.plugins.input_handlers.csv_input_handler:CSVInputHandler',
 
           ],
 
