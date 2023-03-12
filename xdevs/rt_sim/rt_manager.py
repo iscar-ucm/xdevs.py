@@ -1,20 +1,21 @@
 from __future__ import annotations
-
 import queue
 import sys
 import threading
 import time
-from typing import Callable, Any
-
+from typing import Any
 from xdevs.rt_sim.input_handler import InputHandler, InputHandlers
 
+
 def run_handler(i_handler: InputHandler):
+    """"""
     i_handler.initialize()
     try:
         i_handler.run()
-    except Exception:
+    except Exception:  # TODO try to narrow this catch
         i_handler.exit()
         sys.exit()
+
 
 class RealTimeManager:
     def __init__(self, max_jitter: float = None, time_scale: float = 1, event_window: float = 0):
@@ -41,16 +42,26 @@ class RealTimeManager:
 
         self.input_handlers: list[InputHandler] = list()
         self.threads = list()
-        self.queue = queue.SimpleQueue()
+        self.input_queue = queue.SimpleQueue()
 
-    # TODO hacer clases InputHandler y OutputHandler
-    # handler será del tipo InputHandler
     def add_input_handler(self, handler_id: str, **kwargs):
-        i_handler = InputHandlers.create_input_handler(handler_id, **kwargs, queue=self.queue)
+        """
+        TODO documentation
 
+        :param handler_id:
+        :param kwargs:
+        :return:
+        """
+        i_handler = InputHandlers.create_input_handler(handler_id, **kwargs, queue=self.input_queue)
         self.input_handlers.append(i_handler)
 
     def initialize(self, initial_t: float):
+        """
+        TODO documentation
+
+        :param initial_t:
+        :return:
+        """
         for handler in self.input_handlers:
             t = threading.Thread(daemon=True, target=run_handler, args=[handler])
             t.start()
@@ -64,19 +75,21 @@ class RealTimeManager:
 
     def sleep(self, next_v_time: float) -> tuple[float, list[tuple[Any, Any]]]:
         """
-        Simulates the time of the simulation of the DEVS model.
-        It returns a list that contains tuples with destination port name and the received msg.
+        TODO documentation
+
+        :param next_v_time:
+        :return:
         """
         next_r_time = self.last_r_time + (next_v_time - self.last_v_time) * self.time_scale
         events: list[tuple[str, Any]] = list()
         try:
             # First, we wait for a single message
-            events.append(self.queue.get(timeout=max(next_r_time - time.time(), 0)))
+            events.append(self.input_queue.get(timeout=max(next_r_time - time.time(), 0)))
             # Only if we receive one message will we wait for an additional event time window
             t_window = min(time.time() + self.event_window, next_r_time)
             while True:
                 try:
-                    events.append(self.queue.get(timeout=max(t_window - time.time(), 0)))
+                    events.append(self.input_queue.get(timeout=max(t_window - time.time(), 0)))
                 except queue.Empty:
                     break  # event window timeout, we are done with messages
             # Finally, we compute the current time. Must be between last_r_time and next_r_time
