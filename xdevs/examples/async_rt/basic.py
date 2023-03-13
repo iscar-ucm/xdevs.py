@@ -218,7 +218,7 @@ if __name__ == '__main__':
     manager = RealTimeManager(max_jitter=max_jitter, time_scale=time_scale, event_window=event_window)
 
     parsers = {
-        'i_extern': lambda x: Job(int(x))  # le digo al input handler como convertir el string a Job con una función
+        'i_extern': lambda x: Job(x)  # le digo al input handler como convertir el string a Job con una función
     }
     manager.add_input_handler('csv_handler', file="prueba.csv", parsers=parsers)
 
