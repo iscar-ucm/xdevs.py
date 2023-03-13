@@ -15,14 +15,12 @@ class InputHandler(ABC):
         if self.queue is None:
             raise ValueError('queue is mandatory')
 
-    @abstractmethod
     def initialize(self):
-        """Performs any task before calling the run method. It is implementation-specific"""
+        """Performs any task before calling the run method. It is implementation-specific. By default, it is empty."""
         pass
 
-    @abstractmethod
     def exit(self):
-        """Performs any task after the run method. It is implementation-specific"""
+        """Performs any task after the run method. It is implementation-specific. By default, it is empty."""
         pass
 
     @abstractmethod

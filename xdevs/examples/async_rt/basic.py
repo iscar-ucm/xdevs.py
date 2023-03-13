@@ -217,12 +217,14 @@ if __name__ == '__main__':
 
     manager = RealTimeManager(max_jitter=max_jitter, time_scale=time_scale, event_window=event_window)
 
-    manager.add_input_handler('csv_handler', file="../../plugins/input_handlers/prueba.csv")
+    parsers = {
+        'i_extern': lambda x: Job(int(x))  # le digo al input handler como convertir el string a Job con una función
+    }
+    manager.add_input_handler('csv_handler', file="prueba.csv", parsers=parsers)
 
     manager.add_input_handler('function', function=inject_messages)
 
     c = RealTimeCoordinator(gpt, manager)
-    # c.initialize() # ahora lo hago como parte de simulate
     t_ini = time.time()
     print(f' >>> COMENZAMOS : {t_ini}')
     c.simulate(time_interv=execution_time)
