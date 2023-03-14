@@ -1,3 +1,4 @@
+import sys
 from xdevs.models import Coupled
 from xdevs.rt_sim.rt_manager import RealTimeManager
 from xdevs.sim import Coordinator
@@ -30,9 +31,9 @@ class RealTimeCoordinator(Coordinator):
                     try:
                         port.add(msg)
                     except TypeError as e:
-                        print(f'invalid message type: {e}')
+                        print(f'invalid message type: {e}', file=sys.stderr)
                 else:
-                    print(f'input port {port_id} does not exit')
+                    print(f'input port "{port_id}" does not exit', file=sys.stderr)
             # UPDATE SIMULATION CLOCK
             self.clock.time = t
             # EXECUTE NEXT CYCLE
