@@ -17,6 +17,9 @@ class Job:
         self.name = name
         self.time = 0
 
+    def __str__(self):
+        return f'Job:: {self.name}'
+
 
 class Generator(Atomic):
 
@@ -36,6 +39,8 @@ class Generator(Atomic):
         self.job_counter = 1
         self.extern_jobs = list()  # stores external jobs
 
+        self.generate = True
+
     def initialize(self):
         self.hold_in(PHASE_ACTIVE, self.period)
 
@@ -50,15 +55,18 @@ class Generator(Atomic):
     def deltext(self, e):
         self.sigma -= e
         for msg in self.i_extern.values:
-            logger.info("Generator received external job. It will forward it in the next lambda")
+            #logger.info("Generator received external job. It will forward it in the next lambda")
             self.extern_jobs.append(msg)
         if not self.i_stop.empty():
-            self.passivate()
-
+            self.generate = False
     def lambdaf(self):
-        self.o_out.add(Job(str(self.job_counter)))
+        if self.generate:
+            job = Job(str(self.job_counter))
+            self.o_out.add(job)
+            # logger.info("Starting job %s @ t_r = %f" % (job.name, time.time()))
         for msg in self.extern_jobs:  # we also forward external messages
             self.o_out.add(msg)
+            # logger.info("Starting job %s @ t_r = %f" % (msg.name, time.time()))
 
 
 class Processor(Atomic):
@@ -91,6 +99,7 @@ class Processor(Atomic):
 
     def lambdaf(self):
         self.o_out.add(self.current_job)
+        # logger.info("Job %s finished @ t_r = %f" % (self.current_job.name, time.time()))
 
 
 class Transducer(Atomic):
@@ -145,13 +154,13 @@ class Transducer(Atomic):
 
         if self.phase == PHASE_ACTIVE:
             for job in self.i_arrived.values:
-                logger.info("Starting job %s @ t = %d @ t_r = %f" % (job.name, self.clock, time.time()))
+                #logger.info("Starting job %s @ t = %d @ t_r = %f" % (job.name, self.clock, time.time()))
                 job.time = self.clock
                 self.jobs_arrived.append(job)
 
             if self.i_solved:
                 job = self.i_solved.get()
-                logger.info("Job %s finished @ t = %d @ t_r = %f" % (job.name, self.clock, time.time()))
+                #logger.info("Job %s finished @ t = %d @ t_r = %f" % (job.name, self.clock, time.time()))
                 self.total_ta += self.clock - job.time
                 self.jobs_solved.append(job)
 
@@ -186,6 +195,18 @@ class RTGpt(Coupled):
         # new coupling for forwarding messages to generator
         self.add_coupling(self.i_extern, gen.i_extern)
 
+        # new output port for sending solved jobs
+        self.o_extern_proc = Port(Job, 'o_extern_proc')
+        self.o_extern_gen = Port(Job, 'o_extern_gen')
+        self.o_extern_trans = Port(Job, 'o_extern_trans')
+        self.add_out_port(self.o_extern_proc)
+        self.add_out_port(self.o_extern_gen)
+        self.add_out_port(self.o_extern_trans)
+        # new coupling
+        self.add_coupling(proc.o_out, self.o_extern_proc)
+        self.add_coupling(gen.o_out, self.o_extern_gen)
+        self.add_coupling(trans.o_out, self.o_extern_trans)
+
         self.add_coupling(gen.o_out, proc.i_in)
         self.add_coupling(gen.o_out, trans.i_arrived)
         self.add_coupling(proc.o_out, trans.i_solved)
@@ -208,7 +229,7 @@ def inject_messages(q: queue.SimpleQueue):
 
 
 if __name__ == '__main__':
-    execution_time = 30
+    execution_time = 31
     time_scale = 1
     max_jitter = 0.2
     event_window = 0.5
@@ -223,6 +244,8 @@ if __name__ == '__main__':
     manager.add_input_handler('csv_handler', file="prueba.csv", parsers=parsers)
 
     manager.add_input_handler('function', function=inject_messages)
+
+    manager.add_output_handler('csv_out_handler', output_file='csv_output_v3.csv')
 
     c = RealTimeCoordinator(gpt, manager)
     t_ini = time.time()

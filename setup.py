@@ -21,6 +21,10 @@ setup(name='xdevs',
 
           ],
 
+          'xdevs.plugins.output_handlers': [
+              'csv_out_handler = xdevs.plugins.output_handlers.csv_output_handler:CSVOutputHandler',
+          ],
+
           'xdevs.plugins.wrappers': [
               'pypdevs = xdevs.plugins.wrappers.pypdevs:PyPDEVSWrapper'
           ]},

@@ -21,10 +21,9 @@ class CSVInputHandler(InputHandler):
         :param str file: CSV file path.
         :param str delimiter: column delimiter in CSV file. By default, it is set to ','.
         :param dict[str, Callable[[str], Any]] parsers: message parsers. Keys are port names, and values are functions
-        that take an string and returns an object of the corresponding port type. If a parser is not defined, this
+        that take a string and returns an object of the corresponding port type. If a parser is not defined, this
         input handler assumes that the port type is str and forward the message as is. By default, all the ports
         are assumed to accept str objects.
-        :param kwargs: see the InputHandler base class for more details.
         """
         super().__init__(**kwargs)
         self.file: str = kwargs.get('file')
@@ -63,4 +62,4 @@ class CSVInputHandler(InputHandler):
                     print(f'LINE {i + 1}: error parsing msg ("{msg}"). Row will be ignored', file=sys.stderr)
                     continue
                 # 5. inject event to queue
-                self.queue.put((port, msg))
+                self.push_to_queue(port, msg)

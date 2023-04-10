@@ -6,10 +6,9 @@ import pkg_resources
 class InputHandler(ABC):
     def __init__(self, **kwargs):
         """
-        TODO documentation
+        Handler interface for injecting external events to the system.
 
-        :param queue: Queue used to
-        :param kwargs:
+        :param queue: used to collect and inject all external events joining the system.
         """
         self.queue = kwargs.get('queue')
         if self.queue is None:
@@ -28,6 +27,9 @@ class InputHandler(ABC):
         """Execution of the input handler. It is implementation-specific"""
         pass
 
+    def push_to_queue(self, port, msg):
+        """Adding the port and message to the queue."""
+        self.queue.put((port, msg))
 
 class InputHandlers:
     _plugins: ClassVar[dict[str, Type[InputHandler]]] = {
