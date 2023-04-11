@@ -7,10 +7,7 @@ import pkg_resources
 
 class OutputHandler(ABC):
     def __init__(self, **kwargs):
-        """
-        Handler interface for ejecting internal events from the system.
-
-        """
+        """Handler interface for ejecting internal events from the system."""
         self.queue = queue.SimpleQueue()
 
     def initialize(self):
@@ -58,4 +55,3 @@ class OutputHandlers:
         if name not in OutputHandlers._plugins:
             raise ValueError('xDEVS output_handler plugin with name "{}" not found'.format(name))
         return OutputHandlers._plugins[name](**kwargs)
-

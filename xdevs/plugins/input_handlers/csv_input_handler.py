@@ -14,7 +14,7 @@ class CSVInputHandler(InputHandler):
 
             1st -> t, is for the time between the messages are inserted in the system. t = 0 or '' , no time is waited.
 
-            2nd -> port, is for specify the port name. Port = '' ,the row will be omitted.
+            2nd -> port, is for specifying the port name. Port = '' ,the row will be omitted.
 
             3rd -> msg, is for inserting the message which will be transmitted.
 

@@ -245,7 +245,7 @@ if __name__ == '__main__':
 
     manager.add_input_handler('function', function=inject_messages)
 
-    manager.add_output_handler('csv_out_handler', output_file='csv_output_v3.csv')
+    manager.add_output_handler('csv_out_handler', file='csv_output_v3.csv')
 
     c = RealTimeCoordinator(gpt, manager)
     t_ini = time.time()
