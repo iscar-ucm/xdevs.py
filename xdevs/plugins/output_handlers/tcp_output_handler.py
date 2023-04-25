@@ -63,40 +63,40 @@ class TCPOutputHandler(OutputHandler):
         self.lock = True
         while True:
             # First we connect to the server.
-            while self.lock:
-                try:
-                    self.client_socket.connect((self.host, self.port))
-                    print('Connected to server...')
-                    clear_queue(self.queue)     # TODO solucion 2
-                    self.lock = False
-                except ConnectionRefusedError:
-                    # If the connection is refused, wait for a time t_wait and try again.
-                    # This exception can be raised when: the port is blocked or closed by a firewall, host is not
-                    # available or close, among others.
-                    print(f'Connection refused, trying again in {self.t_wait} s. ')
-                    time.sleep(self.t_wait)
-                except OSError as e:
-                    # If a system error occurred when connecting, we assume that the server has been shut down.
-                    print(f'Error while connecting to server: {e}')
-                    self.lock = False
+            try:
+                while self.lock:
+                    try:
+                        self.client_socket.connect((self.host, self.port))
+                        print('Connected to server...')
+                        clear_queue(self.queue)     # TODO solucion 2
+                        self.lock = False
+                    except ConnectionRefusedError:
+                        # If the connection is refused, wait for a time t_wait and try again.
+                        # This exception can be raised when: the port is blocked or closed by a firewall, host is not
+                        # available or close, among others.
+                        print(f'Connection refused, trying again in {self.t_wait} s. ')
+                        time.sleep(self.t_wait)
 
-            # If the connection was a success.
+                # If the connection was a success.
+                # First we check for outgoing events
+                port, msg = self.queue.get()
 
+                # If an outgoing event occurs it is sent to the server ,but first it is formatted.
 
-            # First we check for outgoing events
-            port, msg = self.queue.get()
+                data = self.event_parser(port, msg)
 
-            # If an outgoing event occurs it is sent to the server ,but first it is formatted.
+                if self.client_socket.fileno() > 0:
+                    # We can only send data if the client_socket is not close. Client_socket is closed when .fileno() return
+                    # 0
+                    self.client_socket.sendall(data.encode())
+                    # time.sleep(0.1) TODO solucion 1
 
-            data = self.event_parser(port, msg)
-
-            if self.client_socket.fileno() > 0:
-                # We can only send data if the client_socket is not close. Client_socket is closed when .fileno() return
-                # 0
-                self.client_socket.sendall(data.encode())
-                # time.sleep(0.1) TODO solucion 1
-
-            print(f'msg sent: {data}')
+                print(f'msg sent: {data}')
+                
+            except OSError as e:
+                # If a system error occurred when connecting, we assume that the server has been shut down.
+                print(f'Error while connecting to server: {e}')
+                break
 
 
 if __name__ == '__main__':
