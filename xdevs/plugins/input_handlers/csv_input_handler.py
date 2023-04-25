@@ -20,17 +20,12 @@ class CSVInputHandler(InputHandler):
 
         :param str file: CSV file path.
         :param str delimiter: column delimiter in CSV file. By default, it is set to ','.
-        :param dict[str, Callable[[str], Any]] parsers: message parsers. Keys are port names, and values are functions
-        that take a string and returns an object of the corresponding port type. If a parser is not defined, this
-        input handler assumes that the port type is str and forward the message as is. By default, all the ports
-        are assumed to accept str objects.
         """
         super().__init__(**kwargs)
         self.file: str = kwargs.get('file')
         if self.file is None:
             raise ValueError('file is mandatory')
         self.delimiter: str = kwargs.get('delimiter', ',')
-        self.parsers: dict[str, Callable[[str], Any]] = kwargs.get('parsers', dict())
 
     def run(self):
         with open(self.file, newline='') as csv_file:
@@ -57,7 +52,7 @@ class CSVInputHandler(InputHandler):
                 # 4. parse message
                 try:
                     # if parser is not defined, we forward the message as is (i.e., in string format)
-                    msg = self.parsers.get(port, lambda x: x)(msg)
+                    msg = self.msg_parsers.get(port, lambda x: x)(msg)
                 except Exception:
                     print(f'LINE {i + 1}: error parsing msg ("{msg}"). Row will be ignored', file=sys.stderr)
                     continue

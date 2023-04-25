@@ -7,9 +7,9 @@ class CSVOutputHandler(OutputHandler):
     def __init__(self, **kwargs):
         """
         CSVOutputHandler store in a file the outgoing events in the form : time, port, msg.
-        If not file is given, a default file is created by the name csv_output_date_time.csv.
+        If not file is given, a default file is created by the name output.csv.
 
-        :param output_file: path or name of the output file. By default, it is set to 'output.csv'
+        :param file: path or name of the output file. By default, it is set to 'output.csv'
         :param str delimiter: column delimiter in CSV file. By default, it is set to ','.
         """
         super().__init__()

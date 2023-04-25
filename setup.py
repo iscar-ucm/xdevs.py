@@ -18,11 +18,13 @@ setup(name='xdevs',
 
               'function = xdevs.plugins.input_handlers.callable_function:CallableFunction',
               'csv_handler = xdevs.plugins.input_handlers.csv_input_handler:CSVInputHandler',
+              'tcp_handler = xdevs.plugins.input_handlers.tcp_input_handler:TCPInputHandler',
 
           ],
 
           'xdevs.plugins.output_handlers': [
               'csv_out_handler = xdevs.plugins.output_handlers.csv_output_handler:CSVOutputHandler',
+              'tcp_out_handler = xdevs.plugins.output_handlers.tcp_output_handler:TCPOutputHandler',
           ],
 
           'xdevs.plugins.wrappers': [

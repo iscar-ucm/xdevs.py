@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import ClassVar, Type
+from typing import ClassVar, Type, Callable, Any
 import pkg_resources
 
 
@@ -9,10 +9,24 @@ class InputHandler(ABC):
         Handler interface for injecting external events to the system.
 
         :param queue: used to collect and inject all external events joining the system.
+        :param event_parser: # TODO
+        :param dict[str, Callable[[str], Any]] msg_parsers: message parsers. Keys are port names, and values are
+            functions that take a string and returns an object of the corresponding port type. If a parser is not
+            defined, the input handler assumes that the port type is str and forward the message as is. By default, all
+            the ports are assumed to accept str objects.
+
         """
         self.queue = kwargs.get('queue')
         if self.queue is None:
             raise ValueError('queue is mandatory')
+
+        # event_parser que va a ser para el tcp-syst una unica funcion.
+
+        # Ver si lo pongo en la padre o especifico para cada implementación. Puede necesitarsse una función por
+        # implementacion, pero se llamarán igual "event_parser".
+        self.event_parser = kwargs.get('event_parser', None)
+
+        self.msg_parsers: dict[str, Callable[[str], Any]] = kwargs.get('msg_parsers', dict())
 
     def initialize(self):
         """Performs any task before calling the run method. It is implementation-specific. By default, it is empty."""
