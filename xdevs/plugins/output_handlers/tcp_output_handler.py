@@ -1,6 +1,7 @@
 import socket
 import time
 import threading
+from typing import Any, Callable
 
 from xdevs.rt_sim.output_handler import OutputHandler
 
@@ -31,46 +32,39 @@ class TCPOutputHandler(OutputHandler):
         :param int port: is the port in which the host is listening.
         :param float t_wait: is the time (in s) for trying to reconnect to the server if a ConnectionRefusedError
             exception occurs. Default is 10 s.
-        :param Callable[[Any, Any], str] event_parser: A function that determines the format of outgoing events. By
+        :param Callable[[str, Any], str] event_parser: A function that determines the format of outgoing events. By
             default, the format is 'port,msg', where 'port' is the name of the port in which an event occurred, and
             'msg' is the message given by the port.
 
         """
-        super().__init__()
+        super().__init__(**kwargs)
 
-        self.host = kwargs.get('host', 'LocalHost')
-
-        self.port = kwargs.get('port')
+        self.host: str = kwargs.get('host', 'LocalHost')
+        self.port: int = kwargs.get('port')
         if self.port is None:
-            raise ValueError('port is mandatory')
+            raise ValueError('TCP port is mandatory')
+        self.t_wait: float = kwargs.get('t_wait', 10)
 
-        self.t_wait = kwargs.get('t_wait', 10)
-
-        self.event_parser = kwargs.get('event_parser', tcp_default_format)
+        self.event_parser: Callable[[str, Any], str] = kwargs.get('event_parser', lambda port, msg: f'{port},{msg}')
 
         self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-        self.is_connected = False
+        self.is_connected: bool = False
 
     def exit(self):
-        print(f'CLosing client to server {self.host} in port {self.port}...')
+        print(f'Closing client to server {self.host} in port {self.port}...')
         self.client_socket.close()
         self.is_connected = False
 
     def run(self):
         while True:
-            # First we check for outgoing events
-            port, msg = self.queue.get()
+            # Wait for an outgoing event
+            event = self.pop_event()
             try:
                 if self.is_connected:
-
-                    # If an outgoing event occurs it is sent to the server ,but first it is formatted.
-                    data = self.event_parser(port, msg)
-
                     if self.client_socket.fileno() > 0:
                         # We can only send data if the client_socket is not close. Client_socket is closed when
                         # .fileno() return 0
-                        self.client_socket.sendall(data.encode())
+                        self.client_socket.sendall(event.encode())
                 else:
                     try:
 
@@ -84,7 +78,8 @@ class TCPOutputHandler(OutputHandler):
                         # This exception can be raised when: the port is blocked or closed by a firewall, host is not
                         # available or close, among others.
                         print(f'Connection refused, trying again in {self.t_wait} s. ')
-                        time.sleep(self.t_wait)
+                        time.sleep(self.t_wait)  # TODO no sleep, guarda en una variable el tiempo de cooldown
+                                                 # TODO Si no, se nos acumulan mensajes en la cola!
 
             except OSError as e:
                 # If a system error occurred when connecting, we assume that the server has been shut down.

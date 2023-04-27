@@ -1,5 +1,7 @@
+from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import ClassVar, Type, Callable, Any
+import sys
 import pkg_resources
 
 
@@ -9,23 +11,17 @@ class InputHandler(ABC):
         Handler interface for injecting external events to the system.
 
         :param queue: used to collect and inject all external events joining the system.
-        :param event_parser: # TODO
+        :param Callable[[Any], tuple[str, str]] event_parser: event parser function. It transforms incoming events
+            into tuples (port, message). Note that both are represented as strings. Messages need further parsing.
         :param dict[str, Callable[[str], Any]] msg_parsers: message parsers. Keys are port names, and values are
             functions that take a string and returns an object of the corresponding port type. If a parser is not
             defined, the input handler assumes that the port type is str and forward the message as is. By default, all
             the ports are assumed to accept str objects.
-
         """
         self.queue = kwargs.get('queue')
         if self.queue is None:
             raise ValueError('queue is mandatory')
-
-        # event_parser que va a ser para el tcp-syst una unica funcion.
-
-        # Ver si lo pongo en la padre o especifico para cada implementación. Puede necesitarsse una función por
-        # implementacion, pero se llamarán igual "event_parser".
-        self.event_parser = kwargs.get('event_parser', None)
-
+        self.event_parser: Callable[[Any], tuple[str, str]] | None = kwargs.get('event_parser')
         self.msg_parsers: dict[str, Callable[[str], Any]] = kwargs.get('msg_parsers', dict())
 
     def initialize(self):
@@ -41,9 +37,27 @@ class InputHandler(ABC):
         """Execution of the input handler. It is implementation-specific"""
         pass
 
-    def push_to_queue(self, port, msg):
+    def push_event(self, event: Any):
+        """Parses event as tuple port message and pushes msg to the queue."""
+        try:
+            port, msg = self.event_parser(event)
+        except Exception:
+            # if an exception is triggered while parsing the event, we ignore it
+            print(f'error parsing input event ("{event}"). Event will be ignored', file=sys.stderr)
+            return
+        self.push_msg(port, msg)
+
+    def push_msg(self, port: str, msg: str):
         """Adding the port and message to the queue."""
+        try:
+            # if parser is not defined, we forward the message as is (i.e., in string format)
+            msg = self.msg_parsers.get(port, lambda x: x)(msg)
+        except Exception:
+            # if an exception is triggered while parsing the message, we ignore it
+            print(f'error parsing input msg ("{msg}"). Message will be ignored', file=sys.stderr)
+            return
         self.queue.put((port, msg))
+
 
 class InputHandlers:
     _plugins: ClassVar[dict[str, Type[InputHandler]]] = {

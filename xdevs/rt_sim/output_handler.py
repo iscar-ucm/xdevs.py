@@ -1,14 +1,22 @@
+from __future__ import annotations
 import queue
 from abc import ABC, abstractmethod
-from typing import ClassVar, Type
+import sys
+from typing import Any, Callable, ClassVar, Type
 
 import pkg_resources
 
 
 class OutputHandler(ABC):
     def __init__(self, **kwargs):
-        """Handler interface for ejecting internal events from the system."""
+        """
+        Handler interface for ejecting internal events from the system.
+
+        TODO documentation
+        """
         self.queue = queue.SimpleQueue()
+        self.event_parser: Callable[[str, str], Any] | None = kwargs.get('event_parser')
+        self.msg_parsers: dict[str, Callable[[Any], str]] = kwargs.get('msg_parsers', dict())
 
     def initialize(self):
         """Performs any task before calling the run method. It is implementation-specific. By default, it is empty."""
@@ -23,6 +31,25 @@ class OutputHandler(ABC):
         """Execution of the output handler. It is implementation-specific"""
         pass
 
+    def pop_event(self) -> Any:
+        while True:
+            port, msg = self.pop_msg()
+            try:
+                event = self.event_parser(port, msg)
+            except Exception:
+                print(f'error parsing output event ("{port}","{msg}"). Event will be ignored', file=sys.stderr)
+                continue
+            return event
+
+    def pop_msg(self) -> tuple[str, str]:
+        while True:
+            port, msg = self.queue.get()
+            try:
+                msg = self.msg_parsers.get(port, lambda x: str(x))(msg)
+            except Exception:
+                print(f'error parsing output msg ("{msg}"). Message will be ignored', file=sys.stderr)
+                continue
+            return port, msg
 
 class OutputHandlers:
     _plugins: ClassVar[dict[str, Type[OutputHandler]]] = {

@@ -1,7 +1,6 @@
 import csv
 import sys
 import time
-from typing import Callable, Any
 from xdevs.rt_sim.input_handler import InputHandler
 
 
@@ -49,12 +48,5 @@ class CSVInputHandler(InputHandler):
                 if not port:
                     print(f'LINE {i + 1}: port ID is empty. Row will be ignored', file=sys.stderr)
                     continue
-                # 4. parse message
-                try:
-                    # if parser is not defined, we forward the message as is (i.e., in string format)
-                    msg = self.msg_parsers.get(port, lambda x: x)(msg)
-                except Exception:
-                    print(f'LINE {i + 1}: error parsing msg ("{msg}"). Row will be ignored', file=sys.stderr)
-                    continue
-                # 5. inject event to queue
-                self.push_to_queue(port, msg)
+                # 4. inject event to queue
+                self.push_msg(port, msg)
