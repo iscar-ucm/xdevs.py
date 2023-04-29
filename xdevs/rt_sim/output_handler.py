@@ -32,6 +32,7 @@ class OutputHandler(ABC):
         pass
 
     def pop_event(self) -> Any:
+        """Parsers the outgoing event to the desire implementation."""
         while True:
             port, msg = self.pop_msg()
             try:
@@ -42,6 +43,7 @@ class OutputHandler(ABC):
             return event
 
     def pop_msg(self) -> tuple[str, str]:
+        """Looks in the queue for outgoing events and parser the output msg."""
         while True:
             port, msg = self.queue.get()
             try:

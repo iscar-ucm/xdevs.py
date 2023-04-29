@@ -5,17 +5,7 @@ from typing import Any, Callable
 
 from xdevs.rt_sim.output_handler import OutputHandler
 
-
 # This will be a client that subscribe to a server to send the outgoing event of the system.
-
-def clear_queue(q):
-    """Function that removes all elements in a queue."""
-    try:
-        while not q.empty():
-            q.get()
-    except TypeError as e:
-        print(f'Argument in clear_queue must be a queue type: {e}')
-
 
 def tcp_default_format(port, msg):
     """Default format for outgoing events."""
@@ -56,6 +46,7 @@ class TCPOutputHandler(OutputHandler):
         self.is_connected = False
 
     def run(self):
+        timeout = 0
         while True:
             # Wait for an outgoing event
             event = self.pop_event()
@@ -65,7 +56,7 @@ class TCPOutputHandler(OutputHandler):
                         # We can only send data if the client_socket is not close. Client_socket is closed when
                         # .fileno() return 0
                         self.client_socket.sendall(event.encode())
-                else:
+                elif time.time() > timeout:
                     try:
 
                         self.client_socket.connect((self.host, self.port))
@@ -77,9 +68,9 @@ class TCPOutputHandler(OutputHandler):
                         # If the connection is refused, wait for a time t_wait and try again.
                         # This exception can be raised when: the port is blocked or closed by a firewall, host is not
                         # available or close, among others.
-                        print(f'Connection refused, trying again in {self.t_wait} s. ')
-                        time.sleep(self.t_wait)  # TODO no sleep, guarda en una variable el tiempo de cooldown
-                                                 # TODO Si no, se nos acumulan mensajes en la cola!
+                        print(f'Connection refused, trying again in {self.t_wait} s.')
+                        # Si un outgoing event tardase mas de self.t_wait, se conectaría cuando llegase dicho event.
+                        timeout = time.time() + self.t_wait
 
             except OSError as e:
                 # If a system error occurred when connecting, we assume that the server has been shut down.
@@ -94,7 +85,10 @@ if __name__ == '__main__':
         for i in range(20):
             TCP.queue.put(('Port', f' msg: {i} '))
             print(f'Msg in q and i = {i}')
-            time.sleep(2.5)
+            if i == 3:
+                time.sleep(15)
+            else:
+                time.sleep(2.5)
         TCP.exit()
         print('Closing...')
 
