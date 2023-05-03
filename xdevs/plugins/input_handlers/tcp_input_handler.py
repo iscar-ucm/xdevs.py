@@ -1,54 +1,12 @@
 from __future__ import annotations
 import queue
-import socket
 import threading
+from typing import Any
+from xdevs.plugins.util.socket_server import SocketServer
 from xdevs.rt_sim.input_handler import InputHandler
 
 
-class TCPServer:
-    """
-    TODO
-    """
-    def __init__(self, host, port, q):
-        """
-        TODO
-        :param host:
-        :param port:
-        :param q:
-        """
-        self.host = host
-        self.port = port
-
-        self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.clients_connected: list[threading.Thread] = list()
-
-        self.events_queue = q
-
-    def start(self):
-        self.server_socket.bind((self.host, self.port))
-        self.server_socket.listen()
-        print('Server listening...')
-        while True:
-            client_socket, address = self.server_socket.accept()
-            self.clients_connected.append(threading.Thread(target=client_handler, daemon=True,
-                                                           args=(client_socket, address, self.events_queue)))
-            self.clients_connected[len(self.clients_connected) - 1].start()
-
-def client_handler(client_socket, addr, q):
-    """Function to handle each client connection."""
-
-    print(f'Connected to client {addr}')
-    while True:
-        data = client_socket.recv(1024)
-        # No existe valor por defecto. Es obligatorio pasarle un valor.
-        # 1024 por ser potencia de 2 y tener espacio de sobra.
-        if not data:
-            print(f'Connection with client {addr} closed')
-            break
-        q.put(data)
-
-
-class TCPInputHandler(InputHandler):
+class TCPInputHandler(InputHandler):  # TODO cambiar a SocketServerInputHandler (más generico que TCP, abre la puerta a SocketClientInputHandler)
     def __init__(self, **kwargs):
         """
         TCPInputHandler is a socket server. The server receives the clients messages and inject them to the system as
@@ -70,28 +28,30 @@ class TCPInputHandler(InputHandler):
         """
 
         kwargs['event_parser'] = kwargs.get('event_parser', lambda x: x.decode().split(','))
-
         super().__init__(**kwargs)
 
-        self.host: str = kwargs.get('host', 'LocalHost')
+        # process socket server configuration
+        self.server_address: tuple[Any, ...] = kwargs.get('address')
+        if self.server_address is None:
+            host: str = kwargs.get('host', 'LocalHost')
+            port: int = kwargs.get('port')
+            if port is None:
+                raise ValueError('TCP port is mandatory')
+            self.server_address = (host, port)
+        self.server_socket = kwargs.get('socket')
+        self.max_clients: int | None = kwargs.get('max_clients')
 
-        self.port: int = kwargs.get('port')
-        if self.port is None:
-            raise ValueError('TCP port is mandatory')
-
-        # A list to handle all the clients msgs
-        self.event_queue = queue.SimpleQueue()
-
-        # TCP server to handle the communications
-        self.server = TCPServer(self.host, self.port, self.event_queue)
+        # create socket server to handle the communications
+        self.server = SocketServer(self.server_address, self.server_socket, self.max_clients)
         self.server_thread: threading.Thread = threading.Thread(target=self.server.start, daemon=True)
 
     def initialize(self):
         self.server_thread.start()
 
     def run(self):
+        """It just forwards messages from the server queue to the RT manager's queue."""
         while True:
-            event = self.event_queue.get()
+            event = self.server.input_queue.get()
             self.push_event(event)
 
 

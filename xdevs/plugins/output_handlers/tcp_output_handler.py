@@ -5,14 +5,8 @@ from typing import Any, Callable
 
 from xdevs.rt_sim.output_handler import OutputHandler
 
-# This will be a client that subscribe to a server to send the outgoing event of the system.
 
-def tcp_default_format(port, msg):
-    """Default format for outgoing events."""
-    return f'{port},{msg}'
-
-
-class TCPOutputHandler(OutputHandler):
+class TCPOutputHandler(OutputHandler):  # TODO cambiar a SocketClientOutputHandler (más generico que TCP, abre la puerta a SocketServerOutputHandler)
     def __init__(self, **kwargs):
         """
         TCPOutHandler is a socket client that sends to a server (described as host, port) the outgoing events of the
@@ -52,7 +46,7 @@ class TCPOutputHandler(OutputHandler):
             event = self.pop_event()
             try:
                 if self.is_connected:
-                    if self.client_socket.fileno() > 0:
+                    if self.client_socket.fileno() > 0:  # TODO no podemos usar esto en lugar de self.is_connected?
                         # We can only send data if the client_socket is not close. Client_socket is closed when
                         # .fileno() return 0
                         self.client_socket.sendall(event.encode())
@@ -63,6 +57,7 @@ class TCPOutputHandler(OutputHandler):
                         print('Connected to server...')
 
                         self.is_connected = True
+                        # TODO el mensaje habría que inyectarlo!!
 
                     except ConnectionRefusedError:
                         # If the connection is refused, wait for a time t_wait and try again.
