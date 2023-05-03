@@ -38,23 +38,23 @@ class InputHandler(ABC):
         pass
 
     def push_event(self, event: Any):
-        """Parses event as tuple port message and pushes msg to the queue."""
+        """Parses event as tuple port-message and pushes it to the queue."""
         try:
             port, msg = self.event_parser(event)
-        except Exception:
+        except Exception as e:
             # if an exception is triggered while parsing the event, we ignore it
-            print(f'error parsing input event ("{event}"). Event will be ignored', file=sys.stderr)
+            print(f'error parsing input event ("{event}"): {e}. Event will be ignored', file=sys.stderr)
             return
         self.push_msg(port, msg)
 
     def push_msg(self, port: str, msg: str):
-        """Adding the port and message to the queue."""
+        """Parses the message as the proper object and pushes it to the queue."""
         try:
             # if parser is not defined, we forward the message as is (i.e., in string format)
             msg = self.msg_parsers.get(port, lambda x: x)(msg)
-        except Exception:
+        except Exception as e:
             # if an exception is triggered while parsing the message, we ignore it
-            print(f'error parsing input msg ("{msg}"). Message will be ignored', file=sys.stderr)
+            print(f'error parsing input msg ("{msg}"): {e}. Message will be ignored', file=sys.stderr)
             return
         self.queue.put((port, msg))
 

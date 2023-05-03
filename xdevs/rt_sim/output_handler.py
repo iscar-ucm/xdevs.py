@@ -32,26 +32,27 @@ class OutputHandler(ABC):
         pass
 
     def pop_event(self) -> Any:
-        """Parsers the outgoing event to the desire implementation."""
+        """Waits until it recevies an outgoing event and parses it with the desired format."""
         while True:
             port, msg = self.pop_msg()
             try:
                 event = self.event_parser(port, msg)
-            except Exception:
-                print(f'error parsing output event ("{port}","{msg}"). Event will be ignored', file=sys.stderr)
+            except Exception as e:
+                print(f'error parsing output event ("{port}","{msg}"): {e}. Event will be ignored', file=sys.stderr)
                 continue
             return event
 
     def pop_msg(self) -> tuple[str, str]:
-        """Looks in the queue for outgoing events and parser the output msg."""
+        """Waits until it receives an outgoing message and returns the port and message in string format."""
         while True:
             port, msg = self.queue.get()
             try:
                 msg = self.msg_parsers.get(port, lambda x: str(x))(msg)
-            except Exception:
-                print(f'error parsing output msg ("{msg}"). Message will be ignored', file=sys.stderr)
+            except Exception as e:
+                print(f'error parsing output msg ("{msg}"): {e}. Message will be ignored', file=sys.stderr)
                 continue
             return port, msg
+
 
 class OutputHandlers:
     _plugins: ClassVar[dict[str, Type[OutputHandler]]] = {
