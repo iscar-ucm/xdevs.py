@@ -19,12 +19,14 @@ setup(name='xdevs',
               'function = xdevs.plugins.input_handlers.callable_function:CallableFunction',
               'csv_handler = xdevs.plugins.input_handlers.csv_input_handler:CSVInputHandler',
               'tcp_handler = xdevs.plugins.input_handlers.tcp_input_handler:TCPInputHandler',
+              'mqtt_handler = xdevs.plugins.input_handlers.mqtt_input_handler:MQTTInputHandler',
 
           ],
 
           'xdevs.plugins.output_handlers': [
               'csv_out_handler = xdevs.plugins.output_handlers.csv_output_handler:CSVOutputHandler',
               'tcp_out_handler = xdevs.plugins.output_handlers.tcp_output_handler:TCPOutputHandler',
+              'mqtt_handler = xdevs.plugins.output_handlers.mqtt_output_handler:MQTTOutputHandler',
           ],
 
           'xdevs.plugins.wrappers': [
