@@ -1,6 +1,11 @@
 import sys
-from xdevs.models import Coupled
+import threading
+
+from xdevs.examples.store_cashier.msg import NewClient, ClientToEmployee
+from xdevs.models import Coupled, Port
 from xdevs.sim import Coordinator
+from xdevs.rt_sim.rt_coord import RealTimeCoordinator
+from xdevs.rt_sim.rt_manager import RealTimeManager
 import time
 
 from client_generator import ClientGenerator
@@ -17,9 +22,16 @@ class StoreCashier(Coupled):
         generator = ClientGenerator(mean_clients, stddev_clients)
         queue = StoreQueue()
 
+        self.o_p_queue = Port(ClientToEmployee)
+
+        self.add_out_port(self.o_p_queue)
+
         self.add_component(generator)
         self.add_component(queue)
         self.add_coupling(generator.output_new_client, queue.input_new_client)
+
+        self.add_coupling(queue.output_client_to_employee, self.o_p_queue)
+
         for i in range(n_employees):
             employee = Employee(i, mean_employees, stddev_employees)
             self.add_component(employee)
@@ -27,16 +39,54 @@ class StoreCashier(Coupled):
             self.add_coupling(employee.output_ready, queue.input_available_employee)
 
 
+class GenSys(Coupled):
+    def __init__(self,  mean_clients: float = 1, stddev_clients: float =0, name=None):
+        super().__init__(name)
+        generator = ClientGenerator(mean_clients, stddev_clients)
+
+        self.out_gen_port = Port(NewClient)
+        self.add_out_port(self.out_gen_port)
+
+        self.add_component(generator)
+
+        self.add_coupling(generator.output_new_client, self.out_gen_port)
+
+
+class StoreWithoutGen(Coupled):
+    def __init__(self, n_employees:int = 10000, mean_employees: float = 30, stddev_employees: float =0,
+                 name=None):
+        super().__init__(name)
+
+        queue = StoreQueue()
+
+        self.o_p_queue = Port(ClientToEmployee)
+        self.add_out_port(self.o_p_queue)
+
+        self.i_port_gen = Port(NewClient)
+        self.add_in_port(self.i_port_gen)
+
+        self.add_component(queue)
+
+        self.add_coupling(self.i_port_gen, queue.input_new_client)
+
+        self.add_coupling(queue.output_client_to_employee, self.o_p_queue)
+
+        for i in range(n_employees):
+            employee = Employee(i, mean_employees, stddev_employees)
+            self.add_component(employee)
+            self.add_coupling(queue.output_client_to_employee, employee.input_client)
+            self.add_coupling(employee.output_ready, queue.input_available_employee)
+
 def get_sec(time_str):
     h, m, s = time_str.split(':')
     return int(h) * 3600 + int(m) * 60 + int(s)
 
 
 if __name__ == '__main__':
-    sim_time = 30 * 60
+    sim_time: float = 35
     n_employees = 3
-    mean_employees = 30
-    mean_generator = 10
+    mean_employees = 3
+    mean_generator = 1
     stddev_employees = 0
     stddev_clients = 0
 
@@ -63,7 +113,7 @@ if __name__ == '__main__':
     print("\tNumber of Employees: {}".format(n_employees))
     print("\tMean time required by employee to dispatch clients: {} seconds (standard deviation of {})".format(mean_employees, stddev_employees))
     print("\tMean time between new clients: {} seconds (standard deviation of {})".format(mean_generator, stddev_employees))
-
+    """
     start = time.time()
     store = StoreCashier(n_employees, mean_employees, mean_generator, stddev_employees, stddev_clients)
     middle = time.time()
@@ -75,3 +125,33 @@ if __name__ == '__main__':
     coord.simulate_time(sim_time)
     end = time.time()
     print("Simulation took: {} sec".format(end - start))
+    """
+
+    # Real Time simulation:
+
+    st = StoreWithoutGen(n_employees, mean_employees, stddev_employees)
+
+    st_manager = RealTimeManager(max_jitter=0.2, event_window=0.5)
+    st_manager.add_input_handler('tcp_handler', PORT=5055)
+    st_coord = RealTimeCoordinator(st, st_manager)
+
+
+
+    """
+    store = StoreCashier(n_employees, mean_employees, mean_generator, stddev_employees, stddev_clients)
+    rt_manager = RealTimeManager(max_jitter=0.2, event_window=0.5)
+    rt_manager.add_output_handler('csv_out_handler')
+    c = RealTimeCoordinator(store, rt_manager)
+    """
+    
+    t_ini = time.time()
+    print(f' >>> COMENZAMOS : {t_ini}')
+    st_coord.simulate(time_interv=sim_time)
+    print(f' >>> FIN : {time.time()}')
+    print(f' Tiempo a ejecutar (s) = {sim_time }')
+    print(f' Tiempo ejecutado (s) = {(time.time() - t_ini)}')
+    print(f' Error (%) = '
+          f'{((time.time() - t_ini - sim_time) / sim_time) * 100}')
+
+
+

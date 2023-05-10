@@ -30,7 +30,7 @@ class ClientGenerator(Atomic):
         self.clock += self.sigma
         self.state.next_client_id += 1
         self.state.time_to_next = max(gauss(self.mean, self.stddev), 0)
-        logging.debug('({}) [{}]-> {}'.format(self.clock, self.name, str(self.state)))
+        # print('({}) [{}]-> {}'.format(self.clock, self.name, str(self.state)))
         self.hold_in(self.phase, self.state.time_to_next)
 
     def deltext(self, e):

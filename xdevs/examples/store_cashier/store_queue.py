@@ -12,7 +12,8 @@ class QueueStatus:
         self.pairings = deque()
 
     def __str__(self):
-        return '<clients: {}; employees: {}>'.format(len(self.clients), len(self.employees))
+        return '<clients: {}; employees: {}; pairings: {}>'.format(len(self.clients), len(self.employees),
+                                                                   len(self.pairings))
 
 
 class StoreQueue(Atomic):
@@ -27,7 +28,7 @@ class StoreQueue(Atomic):
         self.add_in_port(self.input_new_client)
         self.add_in_port(self.input_available_employee)
 
-        self.output_client_to_employee = Port(ClientToEmployee)
+        self.output_client_to_employee = Port(ClientToEmployee, 'OUTqueue')
         self.add_out_port(self.output_client_to_employee)
 
     def deltint(self):
@@ -47,7 +48,7 @@ class StoreQueue(Atomic):
                 self.state.pairings.appendleft(ClientToEmployee(new_client, self.state.employees.pop()))
             except IndexError:
                 self.state.clients.appendleft(new_client)
-        logging.debug('({}) [{}]-> {}'.format(self.clock, self.name, str(self.state)))
+        print('({}) [{}]-> {}'.format(self.clock, self.name, str(self.state)))
         timeout = 0 if self.state.pairings else INFINITY
         self.hold_in(self.phase, timeout)
 

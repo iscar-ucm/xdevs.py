@@ -50,7 +50,7 @@ class Employee(Atomic):
                     self.state.clients_so_far += 1
                     self.state.client = pairing.client
                     self.state.time_remaining = max(gauss(self.mean, self.stddev), 0)
-                    logging.debug('({}) [{}]-> {}'.format(self.clock, self.name, str(self.state)))
+                    print('({}) [{}]-> {}'.format(self.clock, self.name, str(self.state)))
         self.hold_in(self.phase, self.state.time_remaining)
 
     def lambdaf(self):
