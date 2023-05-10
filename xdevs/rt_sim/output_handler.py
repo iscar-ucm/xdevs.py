@@ -35,6 +35,7 @@ class OutputHandler(ABC):
         """Waits until it recevies an outgoing event and parses it with the desired format."""
         while True:
             port, msg = self.pop_msg()
+            print(f'POP_EVENT: recibo port = {port} y msg = {msg}')
             try:
                 event = self.event_parser(port, msg)
             except Exception as e:
@@ -46,6 +47,7 @@ class OutputHandler(ABC):
         """Waits until it receives an outgoing message and returns the port and message in string format."""
         while True:
             port, msg = self.queue.get()
+            print(f'POP_MSG: recibo port = {port} y msg = {msg}')
             try:
                 msg = self.msg_parsers.get(port, lambda x: str(x))(msg)
             except Exception as e:

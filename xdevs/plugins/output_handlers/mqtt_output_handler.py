@@ -16,15 +16,17 @@ class MQTTOutputHandler(OutputHandler):
 
         self.client = MQTTClient()
 
-        self.topic: str = kwargs.get('topic', 'RTsys/Output')
+        self.topic: str = kwargs.get('topic', 'RTsys')
 
         self.event_parser: Callable[[str, Any], str] = kwargs.get('event_parser',
-                                                                  lambda port, msg: (f'{self.topic}/{port}', msg))
+                                                            lambda port, msg: (f'{self.topic}/Output/{port}', msg))
 
     def initialize(self):
         self.client.connect(self.host, self.port, self.keepalive)
+        print('MQTT connected')
 
     def run(self):
+        print('MQTT running...')
         while True:
             topic, payload = self.pop_event()
             self.client.publish(topic, payload)

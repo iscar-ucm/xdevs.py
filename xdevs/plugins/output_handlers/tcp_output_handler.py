@@ -46,10 +46,10 @@ class TCPOutputHandler(OutputHandler):  # TODO cambiar a SocketClientOutputHandl
             event = self.pop_event()
             try:
                 if self.is_connected:
-                    if self.client_socket.fileno() > 0:  # TODO no podemos usar esto en lugar de self.is_connected?
+                    #if self.client_socket.fileno() > 0:  # TODO no podemos usar esto en lugar de self.is_connected?
                         # We can only send data if the client_socket is not close. Client_socket is closed when
                         # .fileno() return 0
-                        self.client_socket.sendall(event.encode())
+                    self.client_socket.sendall(event.encode())
                 elif time.time() > timeout:
                     try:
 
@@ -58,6 +58,9 @@ class TCPOutputHandler(OutputHandler):  # TODO cambiar a SocketClientOutputHandl
 
                         self.is_connected = True
                         # TODO el mensaje habría que inyectarlo!!
+                        # LLega un msg -> probamos a conectarnos -> Exito! pero... el msg se envio antes de conectarse
+                        # se puede tratar como instante inicial I guess.
+                        self.client_socket.sendall(event.encode())
 
                     except ConnectionRefusedError:
                         # If the connection is refused, wait for a time t_wait and try again.

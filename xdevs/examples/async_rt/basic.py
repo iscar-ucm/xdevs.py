@@ -55,18 +55,19 @@ class Generator(Atomic):
     def deltext(self, e):
         self.sigma -= e
         for msg in self.i_extern.values:
-            #logger.info("Generator received external job. It will forward it in the next lambda")
+            logger.info("Generator received external job. It will forward it in the next lambda")
             self.extern_jobs.append(msg)
         if not self.i_stop.empty():
             self.generate = False
+
     def lambdaf(self):
         if self.generate:
             job = Job(str(self.job_counter))
             self.o_out.add(job)
-            # logger.info("Starting job %s @ t_r = %f" % (job.name, time.time()))
+            logger.info("Starting job %s @ t_r = %f" % (job.name, time.time()))
         for msg in self.extern_jobs:  # we also forward external messages
             self.o_out.add(msg)
-            # logger.info("Starting job %s @ t_r = %f" % (msg.name, time.time()))
+            logger.info("Starting job %s @ t_r = %f" % (msg.name, time.time()))
 
 
 class Processor(Atomic):
@@ -99,7 +100,7 @@ class Processor(Atomic):
 
     def lambdaf(self):
         self.o_out.add(self.current_job)
-        # logger.info("Job %s finished @ t_r = %f" % (self.current_job.name, time.time()))
+        logger.info("Job %s finished @ t_r = %f" % (self.current_job.name, time.time()))
 
 
 class Transducer(Atomic):
@@ -154,13 +155,13 @@ class Transducer(Atomic):
 
         if self.phase == PHASE_ACTIVE:
             for job in self.i_arrived.values:
-                #logger.info("Starting job %s @ t = %d @ t_r = %f" % (job.name, self.clock, time.time()))
+                # logger.info("Starting job %s @ t = %d @ t_r = %f" % (job.name, self.clock, time.time()))
                 job.time = self.clock
                 self.jobs_arrived.append(job)
 
             if self.i_solved:
                 job = self.i_solved.get()
-                #logger.info("Job %s finished @ t = %d @ t_r = %f" % (job.name, self.clock, time.time()))
+                # logger.info("Job %s finished @ t = %d @ t_r = %f" % (job.name, self.clock, time.time()))
                 self.total_ta += self.clock - job.time
                 self.jobs_solved.append(job)
 
@@ -239,13 +240,25 @@ if __name__ == '__main__':
     manager = RealTimeManager(max_jitter=max_jitter, time_scale=time_scale, event_window=event_window)
 
     parsers = {
-        'i_extern': lambda x: Job(x)  # le digo al input handler como convertir el string a Job con una función
+        'i_extern': lambda x: Job(x),  # le digo al input handler como convertir el string a Job con una función
+        'tcp': lambda x: x.decode().split('.'),
     }
-    manager.add_input_handler('csv_handler', file="prueba.csv", parsers=parsers)
+    # manager.add_input_handler('csv_handler', file="prueba.csv", msg_parsers=parsers)
 
-    manager.add_input_handler('function', function=inject_messages)
+    # manager.add_input_handler('function', function=inject_messages)
+    # Si no quiero ir repitiendo parsers, se lo tendria que meter al manager
+    # manager.add_input_handler('tcp_handler', HOST='LocalHost', PORT=5055, parsers=parsers)
 
-    manager.add_output_handler('csv_out_handler', file='csv_output_v3.csv')
+    # manager.add_output_handler('csv_out_handler', file='csv_output_v3.csv')
+
+    # manager.add_output_handler('tcp_out_handler', PORT=1234)
+
+    sub: dict = {
+        'RTsys/i_extern': 0,
+    }
+    manager.add_input_handler('mqtt_handler', subscriptions=sub, msg_parsers=parsers)
+
+    manager.add_output_handler('mqtt_handler')
 
     c = RealTimeCoordinator(gpt, manager)
     t_ini = time.time()

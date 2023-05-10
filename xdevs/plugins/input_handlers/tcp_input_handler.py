@@ -1,10 +1,11 @@
 from __future__ import annotations
 import queue
+import socket
 import threading
 from typing import Any
 from xdevs.plugins.util.socket_server import SocketServer
 from xdevs.rt_sim.input_handler import InputHandler
-
+import socket
 
 class TCPInputHandler(InputHandler):  # TODO cambiar a SocketServerInputHandler (más generico que TCP, abre la puerta a SocketClientInputHandler)
     def __init__(self, **kwargs):
@@ -32,14 +33,14 @@ class TCPInputHandler(InputHandler):  # TODO cambiar a SocketServerInputHandler 
 
         # process socket server configuration
         self.server_address: tuple[Any, ...] = kwargs.get('address')
-        if self.server_address is None:
+        if self.server_address is None: # Este default es  solo para ipv4.
             host: str = kwargs.get('host', 'LocalHost')
             port: int = kwargs.get('port')
             if port is None:
                 raise ValueError('TCP port is mandatory')
             self.server_address = (host, port)
         self.server_socket = kwargs.get('socket')
-        self.max_clients: int | None = kwargs.get('max_clients')
+        self.max_clients: int | None = kwargs.get('max_clients', 5) # Si no le paso nada da error en socket_server
 
         # create socket server to handle the communications
         self.server = SocketServer(self.server_address, self.server_socket, self.max_clients)
@@ -52,12 +53,14 @@ class TCPInputHandler(InputHandler):  # TODO cambiar a SocketServerInputHandler 
         """It just forwards messages from the server queue to the RT manager's queue."""
         while True:
             event = self.server.input_queue.get()
+            print(f'Event pushed: [{event.decode()}]') # Porque no .decode()
             self.push_event(event)
 
 
 if __name__ == '__main__':
     input_queue = queue.SimpleQueue()
+    server_socket = socket.socket()
 
-    TCP = TCPInputHandler(port=4321, queue=input_queue)
+    TCP = TCPInputHandler(port=4321, queue=input_queue, max_clients=10)
     TCP.initialize()
     TCP.run()

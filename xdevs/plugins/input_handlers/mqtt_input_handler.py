@@ -4,6 +4,7 @@ import threading
 from paho.mqtt.client import Client
 from xdevs.rt_sim.input_handler import InputHandler
 
+
 # Desde este input handler me subscribo a topics para ver los mensajes que entran
 # ruta: RTsys/coupled_name/input/port_name y to_do lo que llegue a ese puerto se inyecta.
 
@@ -19,11 +20,13 @@ from xdevs.rt_sim.input_handler import InputHandler
 #########################################################################
 #########################################################################
 def on_connect(client, userdata, flags, rc):
-    print(f'Connected with mqtt: {rc}')  # rc valor de exito o fracaso en la conexion
+    print(f'MQTT client connected with mqtt: {rc}')  # rc valor de exito o fracaso en la conexion
+    return rc
 
 def on_message(client, userdata, msg):
-    print(f'New msg arrived in {msg.topic} : {msg.payload.decode()} ')
+    # print(f'New msg arrived in {msg.topic} : {msg.payload.decode()} ')
     client.event_queue.put(msg)
+
 
 class MQTTClient(Client):
     def __init__(self, event_queue: queue = None, **kwargs):
@@ -48,6 +51,11 @@ def mqtt_parser(mqtt_msg):
 
 class MQTTInputHandler(InputHandler):
     def __init__(self, subscriptions: dict[str, int] = None, **kwargs):
+        """
+
+        :param subscriptions: diccionario con los topics y su qos
+        :param kwargs:
+        """
 
         kwargs['event_parser'] = kwargs.get('event_parser', mqtt_parser)
 
