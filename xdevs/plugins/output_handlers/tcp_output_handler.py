@@ -3,6 +3,7 @@ import time
 import threading
 from typing import Any, Callable
 
+from xdevs.plugins.util.socket_server import SocketServer
 from xdevs.rt_sim.output_handler import OutputHandler
 
 
@@ -23,44 +24,51 @@ class TCPOutputHandler(OutputHandler):  # TODO cambiar a SocketClientOutputHandl
         """
         super().__init__(**kwargs)
 
-        self.host: str = kwargs.get('host', 'LocalHost')
-        self.port: int = kwargs.get('port')
-        if self.port is None:
-            raise ValueError('TCP port is mandatory')
+        self.client_address: tuple[Any, ...] = kwargs.get('address')
+        if self.client_address is None:
+            host: str = kwargs.get('host', 'LocalHost')
+            port: int = kwargs.get('port')
+            if port is None:
+                raise ValueError('TCP port is mandatory')
+            self.client_address = (host, port)
+
+        self.server_socket = kwargs.get('server_socket')
+
+        self.client = SocketServer(server_address=self.client_address, server_socket=self.server_socket)
+
         self.t_wait: float = kwargs.get('t_wait', 10)
 
         self.event_parser: Callable[[str, Any], str] = kwargs.get('event_parser', lambda port, msg: f'{port},{msg}')
 
-        self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        # self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.is_connected: bool = False
 
-    def exit(self):
-        print(f'Closing client to server {self.host} in port {self.port}...')
-        self.client_socket.close()
-        self.is_connected = False
+#    def exit(self):
+#        print(f'Closing client to server {host} in port {self.port}...')
+#        self.client_socket.close()
+#        self.is_connected = False
 
     def run(self):
-        timeout = 0
+        timeout = 0     # Probar a poner aqui time.time() y ver que pasa
         while True:
             # Wait for an outgoing event
             event = self.pop_event()
             try:
                 if self.is_connected:
-                    #if self.client_socket.fileno() > 0:  # TODO no podemos usar esto en lugar de self.is_connected?
-                        # We can only send data if the client_socket is not close. Client_socket is closed when
-                        # .fileno() return 0
-                    self.client_socket.sendall(event.encode())
+                    # self.client_socket.sendall(event.encode())
+                    self.client.output_queue.put(event)
                 elif time.time() > timeout:
                     try:
 
-                        self.client_socket.connect((self.host, self.port))
-                        print('Connected to server...')
+                        # self.client_socket.connect((self.host, self.port))
+                        # print('Connected to server...')
+
+                        self.client.start_oh()
 
                         self.is_connected = True
-                        # TODO el mensaje habría que inyectarlo!!
-                        # LLega un msg -> probamos a conectarnos -> Exito! pero... el msg se envio antes de conectarse
-                        # se puede tratar como instante inicial I guess.
-                        self.client_socket.sendall(event.encode())
+                        # self.client_socket.sendall(event.encode())
+
+                        self.client.output_queue.put(event)
 
                     except ConnectionRefusedError:
                         # If the connection is refused, wait for a time t_wait and try again.

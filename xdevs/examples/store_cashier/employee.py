@@ -1,4 +1,6 @@
+import datetime
 import logging
+import time
 from random import gauss
 from xdevs.models import Atomic, Port, INFINITY
 
@@ -34,6 +36,8 @@ class Employee(Atomic):
         self.add_out_port(self.output_ready)
         self.add_out_port(self.output_client)
 
+        self.time_started = time.time()
+
     def deltint(self):
         self.clock += self.sigma
         self.state.client = None
@@ -50,11 +54,16 @@ class Employee(Atomic):
                     self.state.clients_so_far += 1
                     self.state.client = pairing.client
                     self.state.time_remaining = max(gauss(self.mean, self.stddev), 0)
-                    print('({}) [{}]-> {}'.format(self.clock, self.name, str(self.state)))
+                    # Para simulacion
+                    # print('({}) [{}]-> {}'.format(self.clock, self.name, str(self.state)))
+                    # Para RT
+                    print('({:.4f}) [{}]-> {}'.format(time.time() - self.time_started, self.name, str(self.state)))
+                    #print(f'EMPAREJADO C-E EN:{datetime.datetime.now()}')
         self.hold_in(self.phase, self.state.time_remaining)
 
     def lambdaf(self):
         clock = self.clock + self.state.time_remaining
+        #print(f'METO LEAVING CLIENT EN :{datetime.datetime.now()}')
         if self.state.client is not None:
             self.output_client.add(LeavingClient(self.state.client.client_id, self.state.client.t_entered, clock))
         self.output_ready.add(self.employee_id)

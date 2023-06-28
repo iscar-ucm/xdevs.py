@@ -1,3 +1,4 @@
+import datetime
 import queue
 import threading
 
@@ -5,16 +6,10 @@ from paho.mqtt.client import Client
 from xdevs.rt_sim.input_handler import InputHandler
 
 
+
 # Desde este input handler me subscribo a topics para ver los mensajes que entran
 # ruta: RTsys/coupled_name/input/port_name y to_do lo que llegue a ese puerto se inyecta.
 
-# Si y no, al final solo nos importa el nombre del puerto. El sistema es capaz de diferenciar entre puertos, por lo que
-# si envio al final una tupla port,msg si dicho port no coincide con un nombre de un puerto de entrada del sistema
-# deberia dar error. msg es el payload asoicado en el pacquete mqtt. Si port no coincide con ninguno no se inyecta nada.
-# ¿No?
-# Al final estaremos conectando un puerto de salida con uno de entrada. El puerto de salida debera publicar en
-# RTsys/coupledAlqueInyecto/input/port_name y asi el input handler podra subscribirse a RTsys/coupledAlqueInyecto(que es
-# el suyo)/input/#.
 
 #########################################################################
 #########################################################################
@@ -62,9 +57,9 @@ class MQTTInputHandler(InputHandler):
         super().__init__(**kwargs)
 
         self.subscriptions = subscriptions
-        self.host = kwargs.get('host', 'test.mosquitto.org')
-        self.port = kwargs.get('port', 1883)
-        self.keepalive = kwargs.get('keepalive', 60)
+        self.host: str = kwargs.get('host', 'test.mosquitto.org')
+        self.port: int = kwargs.get('port', 1883)
+        self.keepalive: int = kwargs.get('keepalive', 60)
 
         self.event_queue: queue.SimpleQueue = queue.SimpleQueue()
         self.client = MQTTClient(event_queue=self.event_queue)
@@ -81,7 +76,7 @@ class MQTTInputHandler(InputHandler):
     def run(self):
         while True:
             event = self.event_queue.get()
-            print(f'MQTT: Event pushed: {event}')
+            print(f'MQTT: Event pushed: {event} t = {datetime.datetime.now()}')
             self.push_event(event)
 
 if __name__ == '__main__':

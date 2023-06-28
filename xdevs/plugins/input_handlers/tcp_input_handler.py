@@ -44,7 +44,7 @@ class TCPInputHandler(InputHandler):  # TODO cambiar a SocketServerInputHandler 
 
         # create socket server to handle the communications
         self.server = SocketServer(self.server_address, self.server_socket, self.max_clients)
-        self.server_thread: threading.Thread = threading.Thread(target=self.server.start, daemon=True)
+        self.server_thread: threading.Thread = threading.Thread(target=self.server.start_ih, daemon=True)
 
     def initialize(self):
         self.server_thread.start()
@@ -53,7 +53,7 @@ class TCPInputHandler(InputHandler):  # TODO cambiar a SocketServerInputHandler 
         """It just forwards messages from the server queue to the RT manager's queue."""
         while True:
             event = self.server.input_queue.get()
-            print(f'Event pushed: [{event.decode()}]') # Porque no .decode()
+            print(f'TCP: Event pushed: [{event.decode()}]') # Porque no .decode()
             self.push_event(event)
 
 

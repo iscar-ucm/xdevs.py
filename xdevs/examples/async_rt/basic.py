@@ -256,9 +256,9 @@ if __name__ == '__main__':
     sub: dict = {
         'RTsys/i_extern': 0,
     }
-    manager.add_input_handler('mqtt_handler', subscriptions=sub, msg_parsers=parsers)
+    #manager.add_input_handler('mqtt_handler', subscriptions=sub, msg_parsers=parsers)
 
-    manager.add_output_handler('mqtt_handler')
+    #manager.add_output_handler('mqtt_handler')
 
     c = RealTimeCoordinator(gpt, manager)
     t_ini = time.time()

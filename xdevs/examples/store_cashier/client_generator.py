@@ -1,7 +1,7 @@
 import logging
 from random import gauss
 from xdevs.models import Atomic, Port
-
+import time
 from msg import NewClient
 
 
@@ -25,12 +25,16 @@ class ClientGenerator(Atomic):
 
         self.output_new_client = Port(NewClient)
         self.add_out_port(self.output_new_client)
+        self.time_started = time.time()
 
     def deltint(self):
         self.clock += self.sigma
         self.state.next_client_id += 1
         self.state.time_to_next = max(gauss(self.mean, self.stddev), 0)
+        # Para simulacion
         # print('({}) [{}]-> {}'.format(self.clock, self.name, str(self.state)))
+        # Para RT
+        print('({:.4f}) [{}]-> {}'.format(time.time()-self.time_started, self.name, str(self.state)))
         self.hold_in(self.phase, self.state.time_to_next)
 
     def deltext(self, e):

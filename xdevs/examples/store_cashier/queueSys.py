@@ -31,8 +31,12 @@ class QueueSys(Coupled):
 
 
 def parser_new_client(msg: str):
+    #print('¿?¿?¿?¿?¿?')
     client_id, t_entered = msg.split('?')
-    return NewClient(client_id, t_entered)
+
+    c = NewClient(client_id=client_id,t_entered=t_entered)
+    #print(f'DEVUELVO:{c}, c_id = {client_id}, t = {t_entered}')
+    return c
 
 
 if __name__ == '__main__':
@@ -46,15 +50,22 @@ if __name__ == '__main__':
         'AvailableEmployee': lambda x: int(x)
     }
 
-    q_manager.add_input_handler('tcp_handler', port=5055, max_clients=5, msg_parsers=msg_parser)
-
-    subs = {
-        'AvailableEmployee': 0,
+    subs_input = {
+        'RTsys/Output/OutputReady': 0,
     }
 
-    q_manager.add_output_handler('mqtt_handler', )
+    subs_output = { # QUITAR
+        'RTsys/InputClient': 0,
+    }
+    connections = {
+        'OutputReady': 'AvailableEmployee'
+    }
 
-    q_manager.add_output_handler('mqtt_handler')
+    q_manager.add_input_handler('tcp_handler', port=4321, max_clients=5, msg_parsers=msg_parser, connections=connections)
+
+    q_manager.add_input_handler('mqtt_handler', subscriptions=subs_input, connections=connections, msg_parsers=msg_parser)
+
+    q_manager.add_output_handler('mqtt_handler', subscriptions=subs_output)
 
     q_coord = RealTimeCoordinator(q, q_manager)
 

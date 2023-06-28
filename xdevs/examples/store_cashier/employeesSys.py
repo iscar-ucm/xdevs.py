@@ -1,3 +1,4 @@
+import datetime
 import time
 
 from xdevs.examples.store_cashier.employee import Employee
@@ -7,8 +8,8 @@ from xdevs.rt_sim import RealTimeManager, RealTimeCoordinator
 
 
 class EmployeesSys(Coupled):
-    def __init__(self, n_employees: int = 100, mean_employees: float = 5,
-                 stddev_employees: float = 0, name=None):
+    def __init__(self, n_employees: int = 3, mean_employees: float = 5,
+                 stddev_employees: float = 0.8, name=None):
         super().__init__(name)
 
         # A single Employee has:
@@ -39,9 +40,14 @@ class EmployeesSys(Coupled):
     # Estoy pasando : MqttClient?i?t
 
 def input_client_parser(msg: str):
-    client, e_id = msg.split('?')
-    c = ClientToEmployee(NewClient(client, time.time()-t_ini), int(e_id))
-    return c
+
+    # ("Client::id::3; t_entered::time.time to Employee::3") Formato de entrada
+    client = msg.split("::id::")[1].split(";")[0]
+    #t = time.time() - float(msg.split("t_entered::")[1].split(" t")[0])
+    t = time.time() - t_ini
+    e_id = msg.split("Employee::")[1]
+
+    return ClientToEmployee(NewClient(client, t), int(e_id))
 
 
 if __name__ == '__main__':
@@ -55,19 +61,29 @@ if __name__ == '__main__':
         'InputClient': input_client_parser,
     }
 
-    sub = {
-        'RTsys/InputClient': 0,
+    sub_input = {
+        'RTsys/Output/Client2Employee': 0,
+    }
+
+    sub_output = { # QUITAR
         'RTsys/AvailableEmployee': 0
     }
 
-    e_manager.add_input_handler('mqtt_handler', subscriptions=sub, msg_parsers=msg_parser)
+    connections = {
+        'Client2Employee': 'InputClient'
+    }
 
-    e_manager.add_output_handler('csv_out_handler')
+    e_manager.add_input_handler('mqtt_handler', subscriptions=sub_input, msg_parsers=msg_parser, connections=connections)
+    e_manager.add_output_handler('mqtt_handler', subscriptions=sub_output)
+
+    file = 'C:/Users/Usuario/Desktop/00 UNI/01 CUARTO/00 TFG/05 Resultados simulaciones/05 Simulacion final/csv_fin.csv'
+
+    e_manager.add_output_handler('csv_out_handler', file=file)
 
     e_coord = RealTimeCoordinator(E, e_manager)
 
     t_ini = time.time()
-    print(f' >>> COMENZAMOS : {t_ini}')
+    print(f' >>> COMENZAMOS : {t_ini} : {datetime.datetime.now()}')
     e_coord.simulate(time_interv=sim_time)
     print(f' >>> FIN : {time.time()}')
     print(f' Tiempo a ejecutar (s) = {sim_time}')

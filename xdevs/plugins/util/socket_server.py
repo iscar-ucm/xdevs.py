@@ -42,7 +42,10 @@ def output_client_handler(client_socket: socket.socket, address: tuple[Any, ...]
     try:
         while True:
             event = output_queue.get()
-            client_socket.sendall(event)
+            client_socket.sendall(event.encode())
+    except OSError as e:
+        # If a system error occurred when connecting, we assume that the server has been shut down.
+        print(f'Error while connecting to server: {e}')
     finally:
         print(f'socket output client disconnected from {address}')
         client_socket.close()
@@ -67,9 +70,10 @@ class SocketServer:
         self.max_clients: int | None = max_clients
         self.clients: list[threading.Thread] = list()  # TODO yo creo que nos lo podemos ahorrar
 
-        self.input_queue: queue.SimpleQueue = queue.SimpleQueue()
+        self.input_queue: queue.SimpleQueue = queue.SimpleQueue() # Para InputHandler
+        self.output_queue: queue.SimpleQueue = queue.SimpleQueue() # Para OutputHandler
 
-    def start(self):
+    def start_ih(self):
         self.server_socket.bind(self.server_address)
         self.server_socket.listen(self.max_clients)
         print(f'socket server with address {self.server_address} is listening...')
@@ -79,4 +83,14 @@ class SocketServer:
             # TODO la hebra etc. la abre el handler de turno
             self.clients.append(threading.Thread(target=input_client_handler, daemon=True,
                                                  args=(client_socket, address, self.input_queue)))
+            #print('TCP MSG ARRIVED')
             self.clients[-1].start()
+
+    def start_oh(self):
+        self.server_socket.connect(self.server_address)
+        print('Connected to server...')
+        c_thread = threading.Thread(target=output_client_handler, daemon=True,
+                                    args=(self.server_socket, self.server_address, self.output_queue))
+        c_thread.start()
+
+

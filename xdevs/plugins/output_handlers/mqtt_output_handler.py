@@ -1,5 +1,6 @@
+import datetime
 import threading
-import  time
+import time
 from typing import Callable, Any
 
 from xdevs.plugins.input_handlers.mqtt_input_handler import MQTTClient
@@ -30,7 +31,7 @@ class MQTTOutputHandler(OutputHandler):
         while True:
             topic, payload = self.pop_event()
             self.client.publish(topic, payload)
-            print(f'MQTT sends : {topic} : {payload}')
+            print(f'MQTT sends : {topic} : {payload} > {datetime.datetime.now()}')
 
 
 if __name__ == '__main__':

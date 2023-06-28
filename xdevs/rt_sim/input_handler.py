@@ -1,8 +1,12 @@
 from __future__ import annotations
+
+import datetime
 from abc import ABC, abstractmethod
 from typing import ClassVar, Type, Callable, Any
 import sys
 import pkg_resources
+
+from xdevs.rt_sim.mqtt_connector import Connector
 
 
 class InputHandler(ABC):
@@ -24,6 +28,9 @@ class InputHandler(ABC):
         self.event_parser: Callable[[Any], tuple[str, str]] | None = kwargs.get('event_parser')
         self.msg_parsers: dict[str, Callable[[str], Any]] = kwargs.get('msg_parsers', dict())
 
+        self.connections: dict[str, str] = kwargs.get('connections', None)
+        self.connector = Connector(conections=self.connections)
+
     def initialize(self):
         """Performs any task before calling the run method. It is implementation-specific. By default, it is empty."""
         pass
@@ -41,22 +48,30 @@ class InputHandler(ABC):
         """Parses event as tuple port-message and pushes it to the queue."""
         try:
             port, msg = self.event_parser(event)
+            # AQUI IRIA EL CONECTOR MQTT; para corregir el puerto en cuestion
+            port = self.connector.input_handler(port)
         except Exception as e:
             # if an exception is triggered while parsing the event, we ignore it
             print(f'error parsing input event ("{event}"): {e}. Event will be ignored', file=sys.stderr)
             return
+        #print(f'HAGO PUSH MSG DE {port},{msg}')
         self.push_msg(port, msg)
 
     def push_msg(self, port: str, msg: str):
         """Parses the message as the proper object and pushes it to the queue."""
+        #print(f'Entro en push_msg con port ->{port}')
         try:
             # if parser is not defined, we forward the message as is (i.e., in string format)
             msg = self.msg_parsers.get(port, lambda x: x)(msg)
+            #print(f'EL msg = {msg}')
         except Exception as e:
             # if an exception is triggered while parsing the message, we ignore it
-            print(f'error parsing input msg ("{msg}"): {e}. Message will be ignored', file=sys.stderr)
+            print(f'error parsing input msg ("{msg}") in port {port}: {e}. Message will be ignored', file=sys.stderr)
             return
+        #print('###')
+        #print(f'EVENTO ENTRA EN LA COLA EN:{datetime.datetime.time()}')
         self.queue.put((port, msg))
+        #print(f'COla = {self.queue}, puse en {port}:{msg}')
 
 
 class InputHandlers:

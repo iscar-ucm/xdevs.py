@@ -1,5 +1,6 @@
 from _collections import deque
 from xdevs.models import Atomic, Port, INFINITY
+import time
 import logging
 
 from msg import NewClient, ClientToEmployee
@@ -31,6 +32,8 @@ class StoreQueue(Atomic):
         self.output_client_to_employee = Port(ClientToEmployee, 'OUTqueue')
         self.add_out_port(self.output_client_to_employee)
 
+        self.time_started = time.time()
+
     def deltint(self):
         self.clock += self.ta
         self.state.pairings.clear()
@@ -48,7 +51,10 @@ class StoreQueue(Atomic):
                 self.state.pairings.appendleft(ClientToEmployee(new_client, self.state.employees.pop()))
             except IndexError:
                 self.state.clients.appendleft(new_client)
-        print('({}) [{}]-> {}'.format(self.clock, self.name, str(self.state)))
+        # Para simulacion normal
+        # print('({}) [{}]-> {}'.format(self.clock, self.name, str(self.state)))
+        # Para RT
+        print('({:.4f}) [{}]-> {}'.format(time.time()-self.time_started, self.name, str(self.state)))
         timeout = 0 if self.state.pairings else INFINITY
         self.hold_in(self.phase, timeout)
 

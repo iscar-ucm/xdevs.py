@@ -12,6 +12,14 @@ class OutputHandler(ABC):
         """
         Handler interface for ejecting internal events from the system.
 
+        :param queue.SimpleQueue() queue: is the queue where all the desired events to be ejected are putted.
+        :param Callable[[str, str], Any] event_parser: event parser function. It transforms incoming tuples
+            (port, message) into events. Note that both are represented as strings.
+        :param dict[str, Callable[[Any], str]] msg_parser: message parsers. Keys are port names, and values are
+            functions that take a string and returns an object of the corresponding port type. If a parser is not
+            defined, the output handler assumes that the port type is str and forward the message as is. By default, all
+            the ports are assumed to accept str objects.
+
         TODO documentation
         """
         self.queue = queue.SimpleQueue()
@@ -32,10 +40,10 @@ class OutputHandler(ABC):
         pass
 
     def pop_event(self) -> Any:
-        """Waits until it recevies an outgoing event and parses it with the desired format."""
+        """Waits until it receives an outgoing event and parses it with the desired format."""
         while True:
             port, msg = self.pop_msg()
-            print(f'POP_EVENT: recibo port = {port} y msg = {msg}')
+            # print(f'POP_EVENT: recibo port = {port} y msg = {msg}')
             try:
                 event = self.event_parser(port, msg)
             except Exception as e:
@@ -47,7 +55,7 @@ class OutputHandler(ABC):
         """Waits until it receives an outgoing message and returns the port and message in string format."""
         while True:
             port, msg = self.queue.get()
-            print(f'POP_MSG: recibo port = {port} y msg = {msg}')
+            # print(f'POP_MSG: recibo port = {port} y msg = {msg}')
             try:
                 msg = self.msg_parsers.get(port, lambda x: str(x))(msg)
             except Exception as e:

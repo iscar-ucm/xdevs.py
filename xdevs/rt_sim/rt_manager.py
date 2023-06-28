@@ -43,7 +43,7 @@ class RealTimeManager:
 
         self.threads = list()
         # Queue for processing the external events that are being injecting in the system
-        self.input_queue = queue.SimpleQueue()
+        self.input_queue: queue.SimpleQueue = queue.SimpleQueue()
         # Lists for storing any handler
         self.input_handlers: list[InputHandler] = list()
         self.output_handlers: list[OutputHandler] = list()
