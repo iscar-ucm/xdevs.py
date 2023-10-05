@@ -8,7 +8,7 @@ from xdevs.rt_sim import RealTimeManager, RealTimeCoordinator
 
 
 class EmployeesSys(Coupled):
-    def __init__(self, n_employees: int = 3, mean_employees: float = 5,
+    def __init__(self, n_employees: int = 3, mean_employees: float = 10,
                  stddev_employees: float = 0.8, name=None):
         super().__init__(name)
 

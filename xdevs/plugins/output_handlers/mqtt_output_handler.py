@@ -31,7 +31,7 @@ class MQTTOutputHandler(OutputHandler):
         while True:
             topic, payload = self.pop_event()
             self.client.publish(topic, payload)
-            print(f'MQTT sends : {topic} : {payload} > {datetime.datetime.now()}')
+            print(f'MQTT sends ')   #: {topic} : {payload} > {datetime.datetime.now()}')
 
 
 if __name__ == '__main__':

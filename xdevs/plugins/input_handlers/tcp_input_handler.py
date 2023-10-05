@@ -40,7 +40,7 @@ class TCPInputHandler(InputHandler):  # TODO cambiar a SocketServerInputHandler 
                 raise ValueError('TCP port is mandatory')
             self.server_address = (host, port)
         self.server_socket = kwargs.get('socket')
-        self.max_clients: int | None = kwargs.get('max_clients', 5) # Si no le paso nada da error en socket_server
+        self.max_clients: int | None = kwargs.get('max_clients', 5)     # Si no le paso nada da error en socket_server
 
         # create socket server to handle the communications
         self.server = SocketServer(self.server_address, self.server_socket, self.max_clients)
@@ -53,7 +53,7 @@ class TCPInputHandler(InputHandler):  # TODO cambiar a SocketServerInputHandler 
         """It just forwards messages from the server queue to the RT manager's queue."""
         while True:
             event = self.server.input_queue.get()
-            print(f'TCP: Event pushed: [{event.decode()}]') # Porque no .decode()
+            print(f'TCP: Event pushed')     #: [{event.decode()}]') # Porque no .decode()
             self.push_event(event)
 
 

@@ -76,7 +76,7 @@ class MQTTInputHandler(InputHandler):
     def run(self):
         while True:
             event = self.event_queue.get()
-            print(f'MQTT: Event pushed: {event} t = {datetime.datetime.now()}')
+            print(f'MQTT: Event pushed')    # {event} t = {datetime.datetime.now()}')
             self.push_event(event)
 
 if __name__ == '__main__':

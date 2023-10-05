@@ -79,7 +79,7 @@ class SocketServer:
         print(f'socket server with address {self.server_address} is listening...')
         while True:
             client_socket, address = self.server_socket.accept()
-            # TODO en vez de esto, añadimos el resultado de eaccept a la cola
+            # TODO en vez de esto, añadimos el resultado de accept a la cola
             # TODO la hebra etc. la abre el handler de turno
             self.clients.append(threading.Thread(target=input_client_handler, daemon=True,
                                                  args=(client_socket, address, self.input_queue)))
