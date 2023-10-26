@@ -5,31 +5,23 @@
 import importlib
 import logging
 import json
+import pkg_resources
+from typing import ClassVar, Type
 
 from xdevs.models import Coupled, Atomic, Port
 from xdevs.examples.basic.basic import Processor, Transducer, Generator
+from xdevs.models import Component
+from xdevs.sim import Coordinator
 
 
-# TODO fabrica componentes
 def create_atomic(info: dict):
-
     name = info.get('name', None)
     clase: str = info.get('class', None)
     valores = info.get('kwargs')
-    ato = None
-    # print(f'clase = {clase}')
-    # print(f'valores = {valores}')
 
-    if clase.split('.')[-1] == 'Processor':
-        ato = Processor(name=name, proc_time=valores.get('proc_time'))
-    elif clase.split('.')[-1] == 'Transducer':
-        ato = Transducer(name=name, obs_time=valores.get('obs_time'))
-    elif clase.split('.')[-1] == 'Generator':
-        ato = Generator(name=name, period=valores.get('period'))
-    else:
-        pass
+    component = ComponentsFactory.create_component_handler(class_id=clase, name=name, **valores)
+    return component
 
-    return ato
 
 # @staticmethod de la clase Coupled
 def from_json(data):
@@ -70,17 +62,17 @@ def from_json(data):
 
             # Connexion eic
             elif connection['componentFrom'] is None and connection['componentTo'] in dict_comp:
-                print('!!!!!')
+                # print('!!!!!')
                 port_to = dict_comp[connection['componentTo']].get_in_port(connection['portTo'])
-                p_in = Port(p_type=type(port_to), name=connection['portFrom'])
+                p_in = Port(p_type=port_to.p_type, name=connection['portFrom'])
                 padre.add_in_port(p_in)
                 padre.add_coupling(padre.get_in_port(p_in.name), port_to)
 
             # Connexion eoc
             elif connection['componentFrom'] in dict_comp and connection['componentTo'] is None:
-                print('¡¡¡¡¡')
+                # print('¡¡¡¡¡')
                 port_from = dict_comp[connection['componentFrom']].get_out_port(connection['portFrom'])
-                p_out = Port(p_type=type(port_from), name=connection['portOut'])
+                p_out = Port(p_type=port_from.p_type, name=connection['portOut'])
                 padre.add_out_port(p_out)
                 padre.add_coupling(port_from, padre.get_out_port(p_out.name))
 
@@ -90,10 +82,34 @@ def from_json(data):
     return padre
 
 
+class ComponentsFactory:
+    _plugins: ClassVar[dict[str, Type[Component]]] = {
+        ep.name: ep.load() for ep in pkg_resources.iter_entry_points('xdevs')}
 
+    @staticmethod
+    def add_plugin(name: str, plugin: Type[Component]):
+        """
+        Registers a custom component to the plugin system.
 
+        :param name: name used to identify the custom component. It must be unique.
+        :param plugin: custom component type. Note that it must not be an object, just the class.
+        """
+        if name in ComponentsFactory._plugins:
+            raise ValueError('xDEVS component plugin with name "{}" already exists'.format(name))
+        ComponentsFactory._plugins[name] = plugin
 
+    @staticmethod
+    def create_component_handler(class_id: str, **kwargs) -> Component:
+        """
+        Creates a new component.
 
+        :param class_id: unique ID of the component to be created.
+        :param kwargs: any additional configuration parameter needed for creating the component.
+        :return: an instance of the Component class.
+        """
+        if class_id not in ComponentsFactory._plugins:
+            raise ValueError('xDEVS component plugin with name "{}" not found'.format(class_id))
+        return ComponentsFactory._plugins[class_id](**kwargs)
 
 
 with open("coupled_model_v2.json") as f:
@@ -105,8 +121,14 @@ Conections = list()
 PJ = Coupled(name='ModelTest')
 
 C = from_json(file)
-print(C)
+
+#   G = ComponentsFactory.create_component_handler('Generator', name='GenTest', period=3)
+#   P = ComponentsFactory.create_component_handler('Processor', name='PTest', proc_time=5)
+
+#   print(C, P, G)
 
 print(f'Componentes añadidos: {Comp}')
+for c in Comp:
+    print(c)
 
 print(f'Conexiones añadidos: {Conections}')

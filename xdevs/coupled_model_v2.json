@@ -6,23 +6,23 @@
 
                     "atomic/Processor": {
                         "name": "p0",
-                        "class": "xdevs.core.examples.efp.Processor",
+                        "class": "Processor",
                         "kwargs": {
-                            "proc_time": "3.0"
+                            "proc_time": 3.0
                         }
                     },
                     "atomic/generator": {
                         "name": "g0",
-                        "class": "xdevs.core.examples.efp.Generator",
+                        "class": "Generator",
                         "kwargs": {
-                            "period": "1.0"
+                            "period": 1.0
                         }
                     },
                     "atomic/transducer": {
                         "name": "t0",
-                        "class": "xdevs.core.examples.efp.Transducer",
+                        "class": "Transducer",
                         "kwargs": {
-                            "obs_time": "100.0"
+                            "obs_time": 100.0
                         }
                     }
                 },
@@ -60,11 +60,21 @@
                     }
                 ]
             },
+
             "atomic/Processor": {
                 "name": "p1",
-                "class": "xdevs.core.examples.efp.Processor",
+                "class": "Processor",
                 "kwargs": {
-                    "proc_time": "300.0"
+                    "proc_time": 300.0
+                }
+            },
+
+            "c/gpt" : {
+                "name": "gptTest",
+                "class": "GPT",
+                "kwargs": {
+                    "period": 3,
+                    "obs_time": 100
                 }
             }
         },

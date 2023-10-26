@@ -29,6 +29,14 @@ setup(name='xdevs',
               'mqtt_handler = xdevs.plugins.output_handlers.mqtt_output_handler:MQTTOutputHandler',
           ],
 
+          'xdevs': [
+              'Generator = xdevs.examples.basic.basic:Generator',
+              'Transducer = xdevs.examples.basic.basic:Transducer',
+              'Processor = xdevs.examples.basic.basic:Processor',
+              'GPT = xdevs.examples.basic.basic:Gpt'
+          ],
+
+
           'xdevs.plugins.wrappers': [
               'pypdevs = xdevs.plugins.wrappers.pypdevs:PyPDEVSWrapper'
           ]},
