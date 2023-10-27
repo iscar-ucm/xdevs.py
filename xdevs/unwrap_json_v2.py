@@ -1,10 +1,7 @@
 # This approach is based on the java implementation in xdevs.java
-
-# Now we are dealing with a GPT model instead of an EFP.
-
-import importlib
-import logging
 import json
+import sys
+
 import pkg_resources
 from typing import ClassVar, Type
 
@@ -14,36 +11,85 @@ from xdevs.models import Component
 from xdevs.sim import Coordinator
 
 
-def create_atomic(info: dict):
-    name = info.get('name', None)
-    clase: str = info.get('class', None)
-    valores = info.get('kwargs')
+def create_component(info: dict):
+    """
+    A function to create components based on the ComponentsFactory
 
-    component = ComponentsFactory.create_component_handler(class_id=clase, name=name, **valores)
+    :param info: a dictionary that contains the class_id and the arguments to create the component
+    :return: a component (Coupled/Atomic) with the parameters set in info
+    """
+    name = info.get('name', None)
+    class_id: str = info.get('class', None)
+    values = info.get('kwargs')
+    component = ComponentsFactory.create_component_handler(class_id=class_id, name=name, **values)
     return component
 
 
 # @staticmethod de la clase Coupled
 def from_json(data):
-    name = list(data.keys())[0]  # Obtiene el nombre del componente acoplado actual
+    """
+    A function to parser a json file into a DEVS model
+    
+    The structure of the json file must be as follows:
+
+    {
+    "MasterCoupledName": {
+        "components" : {
+
+            "ThisIsACoupledModel" :{
+                "components" : {}
+                "connections" : []
+            },
+
+            "ThisIsAAtomicModel" : {
+                "name": "AtomicName",
+                "class": "AtomicClassIdentifier",
+                "kwargs": {
+                    "a_parameter" : ,
+                    ...
+                }
+            },
+
+            ...
+
+        },
+        "connections": [
+            {
+                "componentFrom": "",
+                "portFrom": "",
+                "componentTo": "",
+                "portTo": ""
+            },
+
+            ...
+            
+            ]
+        }
+    }
+
+    :param data: a loaded json file of the type dict
+    :return: a Coupled DEVS model
+    """
+    
+    name = list(data.keys())[0]  # Gets the actual component name
     print(name)
-    padre = Coupled(name)
-    dict_comp = dict()  # dict para almacenar los componentes
+    parent = Coupled(name)
+    dict_comp = dict()  # dict to storage the components
 
     for key in data[name].get('components', {}):
         current_data = data[name]['components'][key]
 
         if 'components' in current_data:
 
-            hijo = from_json({key: current_data})
-            padre.add_component(hijo)
-            dict_comp[hijo.name] = hijo
+            child = from_json({key: current_data})
+            parent.add_component(child)
+            dict_comp[child.name] = child
 
         elif 'name' in current_data:
-            at = create_atomic(current_data)
-            Comp.append(at)
-            dict_comp[at.name] = at
-            padre.add_component(at)
+            component = create_component(current_data)
+            Comp.append(component)
+            dict_comp[component.name] = component
+            parent.add_component(component)
 
         else:
             raise Exception('No component found')
@@ -53,33 +99,37 @@ def from_json(data):
         # print(dict_comp)
         for connection in connections_data:
             # print(connection)
+            try:
+                # Connexion ic
+                if connection['componentFrom'] in dict_comp and connection['componentTo'] in dict_comp:
+                    port_from = dict_comp[connection['componentFrom']].get_out_port(connection['portFrom'])
+                    port_to = dict_comp[connection['componentTo']].get_in_port(connection['portTo'])
+                    parent.add_coupling(port_from, port_to)
 
-            # Connexion ic
-            if connection['componentFrom'] in dict_comp and connection['componentTo'] in dict_comp:
-                port_from = dict_comp[connection['componentFrom']].get_out_port(connection['portFrom'])
-                port_to = dict_comp[connection['componentTo']].get_in_port(connection['portTo'])
-                padre.add_coupling(port_from, port_to)
+                # Connexion eic
+                elif connection['componentFrom'] is None and connection['componentTo'] in dict_comp:
+                    # print('!!!!!')
+                    port_to = dict_comp[connection['componentTo']].get_in_port(connection['portTo'])
+                    p_in = Port(p_type=port_to.p_type, name=connection['portFrom'])
+                    parent.add_in_port(p_in)
+                    parent.add_coupling(parent.get_in_port(p_in.name), port_to)
 
-            # Connexion eic
-            elif connection['componentFrom'] is None and connection['componentTo'] in dict_comp:
-                # print('!!!!!')
-                port_to = dict_comp[connection['componentTo']].get_in_port(connection['portTo'])
-                p_in = Port(p_type=port_to.p_type, name=connection['portFrom'])
-                padre.add_in_port(p_in)
-                padre.add_coupling(padre.get_in_port(p_in.name), port_to)
+                # Connexion eoc
+                elif connection['componentFrom'] in dict_comp and connection['componentTo'] is None:
+                    # print('¡¡¡¡¡')
+                    port_from = dict_comp[connection['componentFrom']].get_out_port(connection['portFrom'])
+                    p_out = Port(p_type=port_from.p_type, name=connection['portOut'])
+                    parent.add_out_port(p_out)
+                    parent.add_coupling(port_from, parent.get_out_port(p_out.name))
 
-            # Connexion eoc
-            elif connection['componentFrom'] in dict_comp and connection['componentTo'] is None:
-                # print('¡¡¡¡¡')
-                port_from = dict_comp[connection['componentFrom']].get_out_port(connection['portFrom'])
-                p_out = Port(p_type=port_from.p_type, name=connection['portOut'])
-                padre.add_out_port(p_out)
-                padre.add_coupling(port_from, padre.get_out_port(p_out.name))
+                else:
+                    raise Exception(f'Connection Error! -> {connection}')
 
-            else:
-                raise Exception('Ports not found')
+            except Exception as e:
+                print(f'Invalid connection in: {connection}. Reason: {e}', file=sys.stderr)
+                raise
 
-    return padre
+    return parent
 
 
 class ComponentsFactory:
@@ -112,23 +162,20 @@ class ComponentsFactory:
         return ComponentsFactory._plugins[class_id](**kwargs)
 
 
-with open("coupled_model_v2.json") as f:
-    file = json.load(f)
+if __name__ == '__main__':
+    with open("coupled_model.json") as f:
+        file = json.load(f)
 
-Comp = list()
-Conections = list()
+    print(type(file))
+    Comp = list()
+    Connections = list()
 
-PJ = Coupled(name='ModelTest')
+    C = from_json(file)
 
-C = from_json(file)
+    print(f'Componentes añadidos: {Comp}')
+    for c in Comp:
+        print(c)
 
-#   G = ComponentsFactory.create_component_handler('Generator', name='GenTest', period=3)
-#   P = ComponentsFactory.create_component_handler('Processor', name='PTest', proc_time=5)
-
-#   print(C, P, G)
-
-print(f'Componentes añadidos: {Comp}')
-for c in Comp:
-    print(c)
-
-print(f'Conexiones añadidos: {Conections}')
+    Coord = Coordinator(C)
+    Coord.initialize()
+    Coord.simulate()

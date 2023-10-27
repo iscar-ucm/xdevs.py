@@ -1,0 +1,53 @@
+{
+    "nameGPT": {
+        "components": {
+            "atomic/Processor": {
+                "name": "p0",
+                "class": "xdevs.core.examples.efp.Processor",
+                "kwargs": {
+                    "proc_time": 3.0
+                }
+            },
+            "atomic/generator": {
+                "name": "g0",
+                "class": "xdevs.core.examples.efp.Generator",
+                "kwargs": {
+                    "period": 1.0
+                }
+            },
+            "atomic/transducer": {
+                "name": "t0",
+                "class": "xdevs.core.examples.efp.Transducer",
+                "kwargs": {
+                    "obs_time": 100.0
+                }
+            }
+        },
+        "connections": [
+            {
+                "componentFrom": "p0",
+                "portFrom": "o_out",
+                "componentTo": "t0",
+                "portTo": "i_solved"
+            },
+            {
+                "componentFrom": "g0",
+                "portFrom": "o_out",
+                "componentTo": "p0",
+                "portTo": "i_in"
+            },
+            {
+                "componentFrom": "g0",
+                "portFrom": "o_out",
+                "componentTo": "t0",
+                "portTo": "i_arrived"
+            },
+            {
+                "componentFrom": "t0",
+                "portFrom": "o_out",
+                "componentTo": "g0",
+                "portTo": "i_stop"
+            }
+        ]
+    }
+}

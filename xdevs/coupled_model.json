@@ -1,104 +1,40 @@
 {
-  "components": {
-    "c0": {
-      "type": "Processor",
-      "components": {},
-      "id": "p0",
-      "att": {
-        "name": "Proc",
-        "proc_time": 3
+  "EFP" : {
+    "components": {
+
+      "Processor": {
+        "name" : "P0",
+        "class": "Processor",
+        "kwargs": {
+          "proc_time": 10
+        }
+      },
+
+      "ef": {
+          "name": "ef0",
+          "class": "EF",
+          "kwargs": {
+            "period": 5,
+            "obs_time": 300
+          }
+
       }
     },
-    "c1": {
-      "type": "None",
-      "components": {
-        "c10": {
-          "type": "Generator",
-          "components": {},
-          "id": "g0",
-          "att": {
-            "name": "Gen",
-            "period": 5
-          }
-        },
-        "c11": {
-          "type": "Transducer",
-          "components": {},
-          "id": "t0",
-          "att": {
-            "name": "Trans",
-            "obs_time": 100
-          }
-        },
-        "eic": [
-          [
-            "c_in",
-            [
-              "t0",
-              "i_solved"
-            ]
-          ]
-        ],
-        "ic": [
-          [
-            [
-              "t0",
-              "o_out"
-            ],
-            [
-              "g0",
-              "i_stop"
-            ]
-          ],
-          [
-            [
-              "g0",
-              "o_out"
-            ],
-            [
-              "t0",
-              "i_arrived"
-            ]
-          ]
-        ],
-        "eoc": [
-          [
-            [
-              "g0",
-              "o_out"
-            ],
-            "c_out"
-          ]
-        ]
+
+    "connections" : [
+      {
+        "componentFrom": "ef0",
+        "portFrom": "p_out_ef",
+        "componentTo": "P0",
+        "portTo": "i_in"
       },
-      "id": "EF",
-      "att": {}
-    },
+      {
+        "componentFrom": "P0",
+        "portFrom": "o_out",
+        "componentTo": "ef0",
+        "portTo": "p_in_ef"
+      }
 
-
-    "eic": [],
-    "ic": [
-      [
-        [
-          "EF",
-          "c_out"
-        ],
-        [
-          "p0",
-          "i_in"
-        ]
-      ],
-      [
-        [
-          "p0",
-          "o_out"
-        ],
-        [
-          "EF",
-          "c_in"
-        ]
-      ]
-    ],
-    "eoc": []
+    ]
   }
 }

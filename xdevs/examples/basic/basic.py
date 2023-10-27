@@ -4,7 +4,7 @@ import logging
 from xdevs import PHASE_ACTIVE, PHASE_PASSIVE, get_logger
 from xdevs.models import Atomic, Coupled, Port
 from xdevs.sim import Coordinator
-from xdevs.rt_sim import CoordinatorRt
+from xdevs.rt_sim import RealTimeCoordinator
 import time
 
 logger = get_logger(__name__, logging.DEBUG)
@@ -187,7 +187,7 @@ class Wrap(Coupled):
 
 if __name__ == '__main__':
     gpt = Gpt("gpt", 2, 100)
-    coord = CoordinatorRt(gpt, 1, 0.10)
+    coord = Coordinator(gpt)
     coord.initialize()
     # coord.simulate()
     coord.simulate()
