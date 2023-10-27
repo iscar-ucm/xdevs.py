@@ -16,7 +16,7 @@ class Wrappers:
         Wrappers._plugins[name] = plugin
 
     @staticmethod
-    def get_wrapper(name: str) -> Type[Atomic]:
+    def create_wrapper(name: str) -> Type[Atomic]:
         if name not in Wrappers._plugins:
             raise ValueError(f'xDEVS wrapper plugin with name "{name}" not found')
         return Wrappers._plugins[name]

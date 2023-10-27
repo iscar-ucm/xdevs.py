@@ -2,17 +2,15 @@
   "EFP" : {
     "components": {
 
-      "Processor": {
-        "name" : "P0",
-        "class": "Processor",
+      "processor": {
+        "component_id": "processor",
         "kwargs": {
           "proc_time": 10
         }
       },
 
       "ef": {
-          "name": "ef0",
-          "class": "EF",
+          "component_id": "ef",
           "kwargs": {
             "period": 5,
             "obs_time": 300
@@ -23,15 +21,15 @@
 
     "connections" : [
       {
-        "componentFrom": "ef0",
+        "componentFrom": "ef",
         "portFrom": "p_out_ef",
-        "componentTo": "P0",
+        "componentTo": "processor",
         "portTo": "i_in"
       },
       {
-        "componentFrom": "P0",
+        "componentFrom": "processor",
         "portFrom": "o_out",
-        "componentTo": "ef0",
+        "componentTo": "ef",
         "portTo": "p_in_ef"
       }
 

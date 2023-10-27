@@ -27,13 +27,13 @@ setup(
             'tcp_out_handler = xdevs.plugins.output_handlers.tcp_output_handler:TCPOutputHandler',
             'mqtt_handler = xdevs.plugins.output_handlers.mqtt_output_handler:MQTTOutputHandler',
         ],
-        'xdevs': [
-            'Generator = xdevs.examples.basic.basic:Generator',
-            'Transducer = xdevs.examples.basic.basic:Transducer',
-            'Processor = xdevs.examples.basic.basic:Processor',
-            'GPT = xdevs.examples.basic.basic:Gpt',
-            'EF = xdevs.examples.basic.efp_model:EF',
-            'EFP = xdevs.examples.basic.efp_model:EFP'
+        'xdevs.plugins.components': [
+            'generator = xdevs.examples.basic.basic:Generator',
+            'transducer = xdevs.examples.basic.basic:Transducer',
+            'processor = xdevs.examples.basic.basic:Processor',
+            'gpt = xdevs.examples.basic.basic:Gpt',
+            'ef = xdevs.examples.basic.efp_model:EF',
+            'efp = xdevs.examples.basic.efp_model:EFP'
         ],
         'xdevs.plugins.wrappers': [
             'pypdevs = xdevs.plugins.wrappers.pypdevs:PyPDEVSWrapper'
