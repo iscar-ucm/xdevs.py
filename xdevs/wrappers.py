@@ -12,11 +12,11 @@ class Wrappers:
     @staticmethod
     def add_plugin(name: str, plugin: Type[Atomic]):
         if name in Wrappers._plugins:
-            raise ValueError('xDEVS wrapper plugin with name "{}" already exists'.format(name))
+            raise ValueError(f'xDEVS wrapper plugin with name "{name}" already exists')
         Wrappers._plugins[name] = plugin
 
     @staticmethod
     def get_wrapper(name: str) -> Type[Atomic]:
         if name not in Wrappers._plugins:
-            raise ValueError('xDEVS wrapper plugin with name "{}" not found'.format(name))
+            raise ValueError(f'xDEVS wrapper plugin with name "{name}" not found')
         return Wrappers._plugins[name]

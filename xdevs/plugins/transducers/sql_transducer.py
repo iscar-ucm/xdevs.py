@@ -1,6 +1,5 @@
 from __future__ import annotations
 from xdevs.transducers import Transducer
-from .bad_dependencies_transducer import BadDependenciesTransducer
 
 try:
     from sqlalchemy import create_engine, text, Column, Float, Integer, MetaData, String, Table
@@ -86,6 +85,9 @@ try:
 
 
 except ModuleNotFoundError:
+    from .bad_dependencies_transducer import BadDependenciesTransducer
+
+
     class SQLTransducer(BadDependenciesTransducer):
         def __init__(self, **kwargs):
             super().__init__(transducer_type='sql', **kwargs)

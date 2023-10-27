@@ -2,7 +2,7 @@ from __future__ import annotations
 import csv
 import os
 from typing import Any, Iterable, Type
-from ...transducers import Transducer
+from xdevs.transducers import Transducer
 
 
 class CSVTransducer(Transducer):

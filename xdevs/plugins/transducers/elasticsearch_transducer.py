@@ -1,7 +1,6 @@
 from __future__ import annotations
 import logging
-from ...transducers import Transducer
-from .bad_dependencies_transducer import BadDependenciesTransducer
+from xdevs.transducers import Transducer
 
 try:
     from elasticsearch import Elasticsearch
@@ -82,6 +81,9 @@ try:
 
 
 except ModuleNotFoundError:
+    from .bad_dependencies_transducer import BadDependenciesTransducer
+
+
     class ElasticsearchTransducer(BadDependenciesTransducer):
         def __init__(self, **kwargs):
             super().__init__(transducer_type='elasticsearch', **kwargs)

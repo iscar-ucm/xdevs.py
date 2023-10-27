@@ -260,7 +260,6 @@ class Transducer(ABC):
 
 
 class Transducers:
-
     _plugins: ClassVar[dict[str, Type[Transducer]]] = {
         ep.name: ep.load() for ep in pkg_resources.iter_entry_points('xdevs.plugins.transducers')
     }
@@ -268,11 +267,11 @@ class Transducers:
     @staticmethod
     def add_plugin(name: str, plugin: Type[Transducer]):
         if name in Transducers._plugins:
-            raise ValueError('xDEVS transducer plugin with name "{}" already exists'.format(name))
+            raise ValueError(f'xDEVS transducer plugin with name "{name}" already exists')
         Transducers._plugins[name] = plugin
 
     @staticmethod
     def create_transducer(name: str, **kwargs) -> Transducer:
         if name not in Transducers._plugins:
-            raise ValueError('xDEVS transducer plugin with name "{}" not found'.format(name))
+            raise ValueError('xDEVS transducer plugin with name "{name}" not found')
         return Transducers._plugins[name](**kwargs)

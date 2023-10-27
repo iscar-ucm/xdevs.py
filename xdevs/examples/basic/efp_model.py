@@ -35,7 +35,7 @@ class EFP(Coupled):
     def __init__(self, name, period, obs_time, proc_time):
         super().__init__(name)
 
-        ef = Ef(name='EF', period=period, obs_time=obs_time)
+        ef = EF(name='EF', period=period, obs_time=obs_time)
 
         proc = Processor(name='EFP_proc', proc_time=proc_time)
 
