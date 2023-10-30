@@ -4,23 +4,20 @@
             "name/GPT": {
                 "components": {
 
-                    "atomic/Processor": {
-                        "name": "p0",
-                        "class": "Processor",
+                    "Processor": {
+                        "component_id": "processor",
                         "kwargs": {
                             "proc_time": 3.0
                         }
                     },
-                    "atomic/generator": {
-                        "name": "g0",
-                        "class": "Generator",
+                    "Generator": {
+                        "component_id": "generator",
                         "kwargs": {
                             "period": 1.0
                         }
                     },
-                    "atomic/transducer": {
-                        "name": "t0",
-                        "class": "Transducer",
+                    "Transducer": {
+                        "component_id": "transducer",
                         "kwargs": {
                             "obs_time": 100.0
                         }
@@ -29,49 +26,47 @@
 
                 "connections": [
                     {
-                        "componentFrom": "p0",
+                        "componentFrom": "Processor",
                         "portFrom": "o_out",
-                        "componentTo": "t0",
+                        "componentTo": "Transducer",
                         "portTo": "i_solved"
                     },
                     {
-                        "componentFrom": "g0",
+                        "componentFrom": "Generator",
                         "portFrom": "o_out",
-                        "componentTo": "p0",
+                        "componentTo": "Processor",
                         "portTo": "i_in"
                     },
                     {
-                        "componentFrom": "g0",
+                        "componentFrom": "Generator",
                         "portFrom": "o_out",
-                        "componentTo": "t0",
+                        "componentTo": "Transducer",
                         "portTo": "i_arrived"
                     },
                     {
-                        "componentFrom": "t0",
+                        "componentFrom": "Transducer",
                         "portFrom": "o_out",
-                        "componentTo": "g0",
+                        "componentTo": "Generator",
                         "portTo": "i_stop"
                     },
                     {
                         "componentFrom": null,
                         "portFrom": "i_in_gpt",
-                        "componentTo": "g0",
+                        "componentTo": "Generator",
                         "portTo": "i_stop"
                     }
                 ]
             },
 
-            "atomic/Processor": {
-                "name": "p1",
-                "class": "Processor",
+            "Processor_2": {
+                "component_id": "processor",
                 "kwargs": {
                     "proc_time": 300.0
                 }
             },
 
             "c/gpt" : {
-                "name": "gptTest",
-                "class": "GPT",
+                "component_id": "gpt",
                 "kwargs": {
                     "period": 3,
                     "obs_time": 100
@@ -81,7 +76,7 @@
 
         "connections": [
             {
-                "componentFrom": "p1",
+                "componentFrom": "Processor_2",
                 "portFrom": "o_out",
                 "componentTo": "name/GPT",
                 "portTo": "i_in_gpt"
