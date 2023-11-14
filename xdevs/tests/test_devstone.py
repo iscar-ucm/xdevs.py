@@ -1,10 +1,10 @@
-from unittest import TestCase
+import unittest
 from xdevs.sim import Coordinator
 from xdevs.examples.devstone.devstone import DEVStone, LI, HI, HO, HOmod
 import random
 
 
-class DevstoneUtilsTestCase(TestCase):
+class DevstoneUtilsTestCase(unittest.TestCase):
 
     def __init__(self, name, num_valid_params_sets: int = 10):
         super().__init__(name)
@@ -245,3 +245,8 @@ class TestHOmod(DevstoneUtilsTestCase):
 
     def test_invalid_inputs(self):
         super().check_invalid_inputs(HOmod)
+
+
+if __name__ == '__main__':
+    import unittest
+    unittest.main()

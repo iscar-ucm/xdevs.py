@@ -3,26 +3,26 @@ import inspect
 import pickle
 from abc import ABC, abstractmethod
 from collections import deque, defaultdict
-from typing import Generator, Generic, Iterator, Type, TypeVar
+from typing import Generator, Generic, Iterator, Type, TypeVar, Optional
 from xdevs import PHASE_ACTIVE, PHASE_PASSIVE, INFINITY
 
 T = TypeVar('T')
 
 
 class Port(Generic[T]):
-    def __init__(self, p_type: Type[T] = None, name: str = None, serve: bool = False):
+    def __init__(self, p_type: Optional[Type[T]] = None, name: Optional[str] = None, serve: bool = False):
         """
         xDEVS implementation of DEVS Port.
         :param p_type: data type of events to be sent/received via the new port instance.
         :param name: name of the new port instance. Defaults to the name of the port's class.
         :param serve: set to True if the port is going to be accessible via RPC server. Defaults to False.
         """
-        self.name: str = name if name else self.__class__.__name__
-        self.p_type: Type[T] = p_type
-        self.serve: bool = serve
-        self.parent: Component | None = None  # xDEVS Component that owns the port
-        self._values: deque[T] = deque()      # Bag containing events directly written to the port
-        self._bag: list[Port[T]] = list()     # Bag containing coupled ports containing events
+        self.name: str = name if name else self.__class__.__name__  # Name of the port
+        self.p_type: Optional[Type[T]] = p_type  # Port type. If None, it can contain any type of event.
+        self.serve: bool = serve                 # True if port is going to be accessible via RPC server
+        self.parent: Component | None = None     # xDEVS Component that owns the port
+        self._values: deque[T] = deque()         # Bag containing events directly written to the port
+        self._bag: list[Port[T]] = list()        # Bag containing coupled ports containing events
 
     def __bool__(self) -> bool:
         return not self.empty()
@@ -31,7 +31,7 @@ class Port(Generic[T]):
         return sum((len(port) for port in self._bag), len(self._values))
 
     def __str__(self) -> str:
-        return '%s.%s(%s)' % (self.parent.name, self.name, self.p_type or 'None')
+        return f'{self.name}<{self.p_type.__name__ if self.p_type is not None else 'None'}>'
 
     def __repr__(self) -> str:
         return str(self)
@@ -66,7 +66,7 @@ class Port(Generic[T]):
         :raises TypeError: If event is not instance of port type.
         """
         if self.p_type is not None and not isinstance(val, self.p_type):
-            raise TypeError('Value type is %s (%s expected)' % (type(val).__name__, self.p_type.__name__))
+            raise TypeError(f'Value type is {type(val).__name__} ({self.p_type.__name__} expected)')
         self._values.append(val)
 
     def extend(self, vals: Iterator[T]):
@@ -88,15 +88,18 @@ class Port(Generic[T]):
 
 
 class Component(ABC):
-    def __init__(self, name: str = None):
+    def __init__(self, name: Optional[str] = None):
         """
         Abstract Base Class for an xDEVS model.
         :param name: name of the xDEVS model. Defaults to the name of the component's class.
         """
         self.name: str = name if name else self.__class__.__name__
-        self.parent: Coupled | None = None   # Parent component of this component
-        self.in_ports: list[Port] = list()   # List containing all the component's input ports
-        self.out_ports: list[Port] = list()  # List containing all the component's output ports
+        self.parent: Optional[Coupled] = None # Parent component of this component
+        self.input: dict[str, Port] = dict()  # Dictionary containing all the component's input ports by name
+        self.output: dict[str, Port] = dict() # Dictionary containing all the component's output ports by name
+        # TODO make these lists private
+        self.in_ports: list[Port] = list()   # List containing all the component's input ports (serialized for performance)
+        self.out_ports: list[Port] = list()  # List containing all the component's output ports (serialized for performance)
 
     def __str__(self) -> str:
         in_str = " ".join([p.name for p in self.in_ports])
@@ -136,29 +139,33 @@ class Component(ABC):
         """
         Adds an input port to the xDEVS model.
         :param port: port to be added to the model.
+        :panics NameError: if port name already exists.
         """
+        if port.name in self.input:
+            raise NameError("Input port name already exists")
         port.parent = self
+        self.input[port.name] = port
         self.in_ports.append(port)
 
     def add_out_port(self, port: Port):
         """
         Adds an output port to the xDEVS model
         :param port: port to be added to the model.
+        :panics NameError: if port name already exists.
         """
+        if port.name in self.output:
+            raise ValueError("Output port name already exists")
         port.parent = self
+        self.output[port.name] = port
         self.out_ports.append(port)
 
     def get_in_port(self, name) -> Port | None:
-        for port in self.in_ports:
-            if port.name == name:
-                return port
-        return None
+        """:return: Input port with the given name. If port is not found, returns None."""
+        self.input.get(name)
 
     def get_out_port(self, name) -> Port | None:
-        for port in self.out_ports:
-            if port.name == name:
-                return port
-        return None
+        """:return: Output port with the given name. If port is not found, returns None."""
+        self.output.get(name)
 
 
 class Coupling(Generic[T]):
@@ -168,16 +175,10 @@ class Coupling(Generic[T]):
         :param port_from: DEVS transmitter port.
         :param port_to: DEVS receiver port.
         :param host: TODO documentation for this
-        :raises ValueError: if coupling direction is incompatible with the target ports.
+        :raises ValueError: port types are incompatible.
         """
         # Check that couplings are valid
-        comp_from: Component = port_from.parent
-        comp_to: Component = port_to.parent
-        if isinstance(comp_from, Atomic) and port_from in comp_from.in_ports:
-            raise ValueError("Input ports whose parent is an Atomic model can not be coupled to any other port")
-        if isinstance(comp_to, Atomic) and port_to in comp_from.out_ports:
-            raise ValueError("Output ports whose parent is an Atomic model can not be recipient of any other port")
-        if port_from.p_type is not None and port_to in inspect.getmro(port_from.p_type):
+        if port_from.p_type is not None and port_to.p_type is not None and port_to in inspect.getmro(port_from.p_type):
             raise ValueError("Ports don't share the same port type")
 
         self.port_from: Port = port_from
@@ -185,7 +186,7 @@ class Coupling(Generic[T]):
         self.host = host  # TODO identify host's variable type
 
     def __str__(self) -> str:
-        return "(%s -> %s)" % (self.port_from, self.port_to)
+        return f"({self.port_from} -> {self.port_to})"
 
     def __repr__(self) -> str:
         return str(self)
@@ -201,7 +202,7 @@ class Coupling(Generic[T]):
 
 
 class Atomic(Component, ABC):
-    def __init__(self, name: str = None):
+    def __init__(self, name: Optional[str] = None):
         """
         xDEVS implementation of DEVS Atomic Model.
         :param name: name of the atomic model. If no name is provided, it will take the class's name by default.
@@ -217,7 +218,7 @@ class Atomic(Component, ABC):
         return self.sigma
 
     def __str__(self) -> str:
-        return "%s(%s, %s)" % (self.name, str(self.phase), self.sigma)
+        return f'{self.name}({self.phase}, {self.sigma})'
 
     @abstractmethod
     def deltint(self):
@@ -279,7 +280,7 @@ class Atomic(Component, ABC):
 
 
 class Coupled(Component, ABC):
-    def __init__(self, name: str = None):
+    def __init__(self, name: Optional[str] = None):
         """
         xDEVS implementation of DEVS Coupled Model.
         :param name: name of the coupled model. If no name is provided, it will take the class's name by default.
@@ -289,6 +290,7 @@ class Coupled(Component, ABC):
         self.ic: dict[Port, dict[Port, Coupling]] = dict()
         self.eic: dict[Port, dict[Port, Coupling]] = dict()
         self.eoc: dict[Port, dict[Port, Coupling]] = dict()
+        # TODO serialized versions of ic, eic and eoc for performance
 
     def initialize(self):
         pass
