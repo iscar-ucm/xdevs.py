@@ -31,11 +31,9 @@ class QueueSys(Coupled):
 
 
 def parser_new_client(msg: str):
-    #print('¿?¿?¿?¿?¿?')
-    client_id, t_entered = msg.split('?')
+        client_id, t_entered = msg.split('?')
 
     c = NewClient(client_id=client_id,t_entered=t_entered)
-    #print(f'DEVUELVO:{c}, c_id = {client_id}, t = {t_entered}')
     return c
 
 
