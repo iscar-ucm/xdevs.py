@@ -15,13 +15,6 @@ t_ini = time.time()
 
 Q = queue.SimpleQueue()
 
-"""for i in range(10):
-    data = f'NewClient,{i}?{time.time()-t_ini}'
-    if i%5:
-        data = f'AvailableEmployee,{i}'
-    c.sendall(data.encode())
-    time.sleep(2)"""
-
 def inyect_clients():
     for i in range(30):
         data = f'NewClient,TCP_{i}?{time.time()}'
