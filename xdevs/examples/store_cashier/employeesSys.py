@@ -32,16 +32,10 @@ class EmployeesSys(Coupled):
             self.add_coupling(employee.output_ready, self.output_ready)
             self.add_coupling(employee.output_client, self.output_client)
 
-    # class ClientToEmployee:
-    #     def __init__(self, new_client, employee_id):
-    #         self.client = new_client
-    #         self.employee_id = employee_id
-
-    # Estoy pasando : MqttClient?i?t
 
 def input_client_parser(msg: str):
 
-    # ("Client::id::3; t_entered::time.time to Employee::3") Formato de entrada
+    # ("Client::id::3; t_entered::time.time to Employee::3") Entry format
     client = msg.split("::id::")[1].split(";")[0]
     #t = time.time() - float(msg.split("t_entered::")[1].split(" t")[0])
     t = time.time() - t_ini
@@ -76,7 +70,8 @@ if __name__ == '__main__':
     e_manager.add_input_handler('mqtt_handler', subscriptions=sub_input, msg_parsers=msg_parser, connections=connections)
     e_manager.add_output_handler('mqtt_handler', subscriptions=sub_output)
 
-    file = 'C:/Users/Usuario/Desktop/00 UNI/01 CUARTO/00 TFG/05 Resultados simulaciones/05 Simulacion final/csv_fin.csv'
+    file = 'csv_fin.csv'
+   
 
     e_manager.add_output_handler('csv_out_handler', file=file)
 
