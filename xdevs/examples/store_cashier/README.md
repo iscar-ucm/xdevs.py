@@ -4,7 +4,7 @@
 
 The following picture shows the diagram of the DEVS scenario under study. 
 This use case scenario models the operation of a store cashier.
-In this system, clients (modeled by a TCP script) join the line at a store's queue (modeled as {StoreQueue}).
+In this system, clients (modeled by a TCP script) join the line at a store's queue (modeled as StoreQueue).
 The queue operates on a FIFO principle, matching each client with an available employee, analogous to customers waiting in line to check out their purchases.
 Each employee (modeled as Employee) signals their availability by indicating whether they are free or occupied following an interaction with a client, thereby emulating the process of checking out purchases. 
 The communication is carried out using the TCP and MQTT protocols as it can be seen in the picture.
