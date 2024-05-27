@@ -29,7 +29,8 @@ class Port(Generic[T]):
         return sum((len(port) for port in self._bag), len(self._values))
 
     def __str__(self) -> str:
-        return f'{self.name}<{self.p_type.__name__ if self.p_type is not None else 'None'}>'
+        p_type = self.p_type.__name__ if self.p_type is not None else 'None'
+        return f'{self.name}<{p_type}>'
 
     def __repr__(self) -> str:
         return str(self)

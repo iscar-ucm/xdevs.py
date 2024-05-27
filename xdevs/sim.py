@@ -4,7 +4,6 @@ import _thread
 import itertools
 import pickle
 import logging
-import warnings
 
 from abc import ABC, abstractmethod
 from collections import defaultdict

@@ -1,14 +1,22 @@
 from __future__ import annotations
 import json
-from importlib.metadata import entry_points
+import sys
+from importlib.metadata import entry_points, EntryPoint
 from typing import ClassVar
 from xdevs.abc import InputHandler, OutputHandler, Transducer
 from xdevs.models import Atomic, Component, Port, Coupled
 
 
+def load_entry_points(group: str) -> list[EntryPoint]:
+    if sys.version_info < (3, 10):
+        return entry_points().get(group, [])
+    else:
+        return entry_points(group=group)
+
+
 class InputHandlers:
     _plugins: ClassVar[dict[str, type[InputHandler]]] = {
-        ep.name: ep.load() for ep in entry_points(group='xdevs.input_handlers')
+        ep.name: ep.load() for ep in load_entry_points('xdevs.input_handlers')
     }
 
     @staticmethod
@@ -40,7 +48,7 @@ class InputHandlers:
 
 class OutputHandlers:
     _plugins: ClassVar[dict[str, type[OutputHandler]]] = {
-        ep.name: ep.load() for ep in entry_points(group='xdevs.output_handlers')
+        ep.name: ep.load() for ep in load_entry_points('xdevs.output_handlers')
     }
 
     @staticmethod
@@ -73,7 +81,7 @@ class OutputHandlers:
 
 class Wrappers:
     _plugins: ClassVar[dict[str, type[Atomic]]] = {
-        ep.name: ep.load() for ep in entry_points(group='xdevs.wrappers')
+        ep.name: ep.load() for ep in load_entry_points('xdevs.wrappers')
     }
 
     @staticmethod
@@ -91,7 +99,7 @@ class Wrappers:
 
 class Transducers:
     _plugins: ClassVar[dict[str, type[Transducer]]] = {
-        ep.name: ep.load() for ep in entry_points(group='xdevs.transducers')
+        ep.name: ep.load() for ep in load_entry_points('xdevs.transducers')
     }
 
     @staticmethod
@@ -110,7 +118,7 @@ class Transducers:
 class Components:
     """This class creates components from unique identifiers called "component_id"."""
     _plugins: ClassVar[dict[str, type[Component]]] = {
-        ep.name: ep.load() for ep in entry_points(group='xdevs.components')
+        ep.name: ep.load() for ep in load_entry_points('xdevs.components')
     }
 
     @staticmethod

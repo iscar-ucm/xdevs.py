@@ -1,3 +1,4 @@
+from __future__ import annotations
 import csv
 import time
 from xdevs.abc.handler import OutputHandler

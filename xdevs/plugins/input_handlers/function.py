@@ -1,3 +1,4 @@
+from __future__ import annotations
 from xdevs.abc.handler import InputHandler
 
 

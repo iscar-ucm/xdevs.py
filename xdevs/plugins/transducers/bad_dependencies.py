@@ -1,3 +1,4 @@
+from __future__ import annotations
 from abc import ABC
 from xdevs.abc.transducer import Transducer
 
@@ -9,7 +10,8 @@ class BadDependenciesTransducer(Transducer, ABC):
         :param str transducer_type: transducer type.
         """
         super().__init__(**kwargs)
-        raise ImportError(f'{kwargs.get('transducer_type')} transducer specific dependencies are not imported')
+        transducer_type = kwargs['transducer_type']
+        raise ImportError(f'{transducer_type} transducer specific dependencies are not imported')
 
     def create_known_data_types_map(self):
         pass

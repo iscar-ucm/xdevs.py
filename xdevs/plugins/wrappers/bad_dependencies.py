@@ -1,3 +1,4 @@
+from __future__ import annotations
 from abc import ABC
 from xdevs.models import Atomic
 
@@ -9,7 +10,8 @@ class BadDependenciesWrapper(Atomic, ABC):
         :param str wrapper_type: wrapper type.
         """
         super().__init__(**kwargs)
-        raise ImportError(f'{kwargs['wrapper_type']} wrapper specific dependencies are not installed')
+        wrapper_type = kwargs['wrapper_type']
+        raise ImportError(f'{wrapper_type} wrapper specific dependencies are not installed')
 
     def deltint(self):
         pass

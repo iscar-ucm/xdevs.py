@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 try:
     from pypdevs.DEVS import AtomicDEVS
     from pypdevs.minimal import AtomicDEVS as AtomicDEVSMin
