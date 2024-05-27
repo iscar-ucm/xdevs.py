@@ -320,7 +320,6 @@ class Coordinator(AbstractSimulator):
     def simulate_time(self, time_interv: float = INFINITY):
         self.clock.time = self.time_next
         tf = self.clock.time + time_interv
-
         while self.clock.time < tf:
             self.lambdaf()
             self.deltfcn()
