@@ -1,0 +1,50 @@
+{
+    "gpt": {
+        "components": {
+            "generator": {
+                "component_id": "generator",
+                "kwargs": {
+                    "gen_t": 3.0
+                }
+            },
+            "processor": {
+                "component_id": "processor",
+                "kwargs": {
+                    "proc_t": 5.0
+                }
+            },
+            "transducer": {
+                "component_id": "transducer",
+                "kwargs": {
+                    "obs_t": 100.0
+                }
+            }
+        },
+        "couplings": [
+            {
+                "componentFrom": "processor",
+                "portFrom": "o_out",
+                "componentTo": "transducer",
+                "portTo": "i_solved"
+            },
+            {
+                "componentFrom": "generator",
+                "portFrom": "o_out",
+                "componentTo": "processor",
+                "portTo": "i_in"
+            },
+            {
+                "componentFrom": "generator",
+                "portFrom": "o_out",
+                "componentTo": "transducer",
+                "portTo": "i_arrived"
+            },
+            {
+                "componentFrom": "transducer",
+                "portFrom": "o_out",
+                "componentTo": "generator",
+                "portTo": "i_stop"
+            }
+        ]
+    }
+}

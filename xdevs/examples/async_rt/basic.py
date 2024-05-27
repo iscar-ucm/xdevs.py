@@ -5,7 +5,7 @@ import time
 
 from xdevs import PHASE_ACTIVE, PHASE_PASSIVE, get_logger
 from xdevs.models import Atomic, Coupled, Port
-from xdevs.rt_sim import RealTimeCoordinator, RealTimeManager
+from xdevs.rt import RealTimeCoordinator, RealTimeManager
 
 logger = get_logger(__name__, logging.INFO)
 
@@ -243,7 +243,7 @@ if __name__ == '__main__':
         'i_extern': lambda x: Job(x),  # le digo al input handler como convertir el string a Job con una función
         'tcp': lambda x: x.decode().split('.'),
     }
-    # manager.add_input_handler('csv_handler', file="prueba.csv", msg_parsers=parsers)
+    manager.add_input_handler('csv_handler', file="prueba.csv", msg_parsers=parsers)
 
     # manager.add_input_handler('function', function=inject_messages)
     # Si no quiero ir repitiendo parsers, se lo tendria que meter al manager
@@ -263,7 +263,7 @@ if __name__ == '__main__':
     c = RealTimeCoordinator(gpt, manager)
     t_ini = time.time()
     print(f' >>> COMENZAMOS : {t_ini}')
-    c.simulate(time_interv=execution_time)
+    c.simulate_iters(time_interv=execution_time)
     print(f' >>> FIN : {time.time()}')
     print(f' Tiempo a ejecutar (s) = {execution_time * time_scale}')
     print(f' Tiempo ejecutado (s) = {(time.time() - t_ini)}')

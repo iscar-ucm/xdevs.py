@@ -49,6 +49,8 @@ class DelayedAtomic(Atomic):
 
 
 class AbstractDEVStone(Coupled, ABC):
+    components: list[AbstractDEVStone | DelayedAtomic]
+
     def __init__(self, name: str, width: int, depth: int, int_delay: float, ext_delay: float, test: bool = False):
         super().__init__(name)
         if width < 1:
@@ -290,4 +292,4 @@ if __name__ == '__main__':
     coord = Coordinator(root)
     coord.initialize()
     coord.inject(root.i_in, 0)
-    coord.simulate()
+    coord.simulate_iters()

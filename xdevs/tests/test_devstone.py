@@ -1,4 +1,5 @@
 import unittest
+from xdevs import INFINITY
 from xdevs.sim import Coordinator
 from xdevs.examples.devstone.devstone import DEVStone, LI, HI, HO, HOmod
 import random
@@ -66,7 +67,7 @@ class TestLI(DevstoneUtilsTestCase):
                 coord = Coordinator(root)
                 coord.initialize()
                 # coord.inject(li_root.i_in, 0)
-                coord.simulate()
+                coord.simulate_time(INFINITY)
 
                 self.assertEqual(root.n_internals, (params["width"] - 1) * (params["depth"] - 1) + 1)
                 self.assertEqual(root.n_externals, (params["width"] - 1) * (params["depth"] - 1) + 1)
@@ -116,7 +117,7 @@ class TestHI(DevstoneUtilsTestCase):
                 root = DEVStone("HI_root", **params)
                 coord = Coordinator(root)
                 coord.initialize()
-                coord.simulate()
+                coord.simulate_time(INFINITY)
 
                 self.assertEqual(root.n_internals, (((params["width"] - 1) * params["width"]) / 2) * (params["depth"] - 1) + 1)
                 self.assertEqual(root.n_externals, (((params["width"] - 1) * params["width"]) / 2) * (params["depth"] - 1) + 1)
@@ -165,7 +166,7 @@ class TestHO(DevstoneUtilsTestCase):
                 coord = Coordinator(root)
                 coord.initialize()
                 # TODO aqui n_externals debería ser igual a n_atomics (pero no lo es...)
-                coord.simulate()
+                coord.simulate_time(INFINITY)
 
                 self.assertEqual(root.n_internals, (params["width"] - 1) * params["width"] / 2 * (params["depth"] - 1) + 1)
                 self.assertEqual(root.n_externals, (params["width"] - 1) * params["width"] / 2 * (params["depth"] - 1) + 1)
@@ -221,7 +222,7 @@ class TestHOmod(DevstoneUtilsTestCase):
                 root = DEVStone("HOmod_root", **params)
                 coord = Coordinator(root)
                 coord.initialize()
-                coord.simulate()
+                coord.simulate_time(INFINITY)
 
                 calc_in = lambda x, w: 1 + (x - 1)*(w - 1)
                 exp_trans = 1

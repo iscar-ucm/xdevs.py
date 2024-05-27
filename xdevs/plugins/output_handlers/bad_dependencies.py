@@ -1,5 +1,5 @@
 from abc import ABC
-from xdevs.rt_sim.output_handler import OutputHandler
+from xdevs.abc.handler import OutputHandler
 
 
 class BadDependenciesHandler(OutputHandler, ABC):
@@ -9,7 +9,7 @@ class BadDependenciesHandler(OutputHandler, ABC):
         :param str handler_type: transducer type.
         """
         super().__init__(**kwargs)
-        raise ImportError(f'{kwargs.get('handler_type')} input handler specific dependencies are not imported')
+        raise ImportError(f'{kwargs['handler_type']} input handler specific dependencies are not imported')
 
     def run(self):
         pass

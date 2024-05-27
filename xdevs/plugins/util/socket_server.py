@@ -92,5 +92,3 @@ class SocketServer:
         c_thread = threading.Thread(target=output_client_handler, daemon=True,
                                     args=(self.server_socket, self.server_address, self.output_queue))
         c_thread.start()
-
-

@@ -1,0 +1,67 @@
+[build-system]
+requires = ["setuptools >= 61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "xdevs"
+version = "3.0.0"
+requires-python = ">=3.8"
+authors = [
+  {name = "Román Cárdenas"},
+  {name = "Óscar Fernández Sebastián"},
+  {name = "Kevin Henares"},
+  {name = "José L. Risco-Martín"},
+]
+maintainers = [
+  {name = "Román Cárdenas", email = "r.cardenas@upm.es"},
+]
+description = "xDEVS M&S framework"
+readme = "README.md"
+license = {file = "LICENSE.txt"}
+keywords = ["DEVS", "modeling", "simulation"]
+
+[project.optional-dependencies]
+sql = ["sqlalchemy"]
+elasticsearch = ["elasticsearch"]
+mqtt = ["paho-mqtt"]
+
+[project.urls]
+Homepage = "https://github.com/iscar-ucm/xdevs"
+Documentation = "https://github.com/iscar-ucm/xdevs"
+Repository = "https://github.com/iscar-ucm/xdevs.py.git"
+"Bug Tracker" = "https://github.com/iscar-ucm/xdevs.py/issues"
+Changelog = "https://github.com/iscar-ucm/xdevs.py/blob/main/CHANGELOG.md"
+
+[project.entry-points."xdevs.transducers"]
+csv = "xdevs.plugins.transducers.csv:CSVTransducer"
+sql = "xdevs.plugins.transducers.sql:SQLTransducer"
+elasticsearch = "xdevs.plugins.transducers.elasticsearch:ElasticsearchTransducer"
+
+[project.entry-points."xdevs.input_handlers"]
+function = "xdevs.plugins.input_handlers.function:CallableFunction"
+csv = "xdevs.plugins.input_handlers.csv:CSVInputHandler"
+tcp = "xdevs.plugins.input_handlers.tcp:TCPInputHandler"
+mqtt = "xdevs.plugins.input_handlers.mqtt:MQTTInputHandler"
+
+[project.entry-points."xdevs.output_handlers"]
+csv = "xdevs.plugins.output_handlers.csv:CSVOutputHandler"
+tcp = "xdevs.plugins.output_handlers.tcp:TCPOutputHandler"
+mqtt = "xdevs.plugins.output_handlers.mqtt:MQTTOutputHandler"
+
+[project.entry-points."xdevs.components"]
+generator = "xdevs.examples.gpt.gpt:Generator"
+transducer = "xdevs.examples.gpt.gpt:Transducer"
+processor = "xdevs.examples.gpt.gpt:Processor"
+gpt = "xdevs.examples.gpt.gpt:Gpt"
+ef = "xdevs.examples.gpt.efp:Ef"
+efp = "xdevs.examples.gpt.efp:Efp"
+
+[project.entry-points."xdevs.wrappers"]
+pypdevs = "xdevs.plugins.wrappers.pypdevs:PyPDEVSWrapper"
+
+[tool.setuptools]
+include-package-data = false
+
+[tool.setuptools.packages.find]
+include = ["xdevs*"]
+exclude = ["xdevs.tests*"]

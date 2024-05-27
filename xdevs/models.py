@@ -3,14 +3,12 @@ import inspect
 import pickle
 from abc import ABC, abstractmethod
 from collections import deque, defaultdict
-from typing import Generator, Generic, Iterator, Type, TypeVar, Optional
-from xdevs import PHASE_ACTIVE, PHASE_PASSIVE, INFINITY
-
-T = TypeVar('T')
+from typing import Generator, Generic, Iterator
+from xdevs import PHASE_ACTIVE, PHASE_PASSIVE, INFINITY, T
 
 
 class Port(Generic[T]):
-    def __init__(self, p_type: Optional[Type[T]] = None, name: Optional[str] = None, serve: bool = False):
+    def __init__(self, p_type: type[T] | None = None, name: str = None, serve: bool = False):
         """
         xDEVS implementation of DEVS Port.
         :param p_type: data type of events to be sent/received via the new port instance.
@@ -18,7 +16,7 @@ class Port(Generic[T]):
         :param serve: set to True if the port is going to be accessible via RPC server. Defaults to False.
         """
         self.name: str = name if name else self.__class__.__name__  # Name of the port
-        self.p_type: Optional[Type[T]] = p_type  # Port type. If None, it can contain any type of event.
+        self.p_type: type[T] | None = p_type  # Port type. If None, it can contain any type of event.
         self.serve: bool = serve                 # True if port is going to be accessible via RPC server
         self.parent: Component | None = None     # xDEVS Component that owns the port
         self._values: deque[T] = deque()         # Bag containing events directly written to the port
@@ -88,13 +86,13 @@ class Port(Generic[T]):
 
 
 class Component(ABC):
-    def __init__(self, name: Optional[str] = None):
+    def __init__(self, name: str = None):
         """
         Abstract Base Class for an xDEVS model.
         :param name: name of the xDEVS model. Defaults to the name of the component's class.
         """
         self.name: str = name if name else self.__class__.__name__
-        self.parent: Optional[Coupled] = None # Parent component of this component
+        self.parent: Coupled | None = None # Parent component of this component
         self.input: dict[str, Port] = dict()  # Dictionary containing all the component's input ports by name
         self.output: dict[str, Port] = dict() # Dictionary containing all the component's output ports by name
         # TODO make these lists private
@@ -104,7 +102,7 @@ class Component(ABC):
     def __str__(self) -> str:
         in_str = " ".join([p.name for p in self.in_ports])
         out_str = " ".join([p.name for p in self.out_ports])
-        return '%s: InPorts[%s] OutPorts[%s]' % (self.name, in_str, out_str)
+        return f'{self.name}: InPorts[{in_str}] OutPorts[{out_str}]'
 
     def __repr__(self):
         return self.name
@@ -161,11 +159,11 @@ class Component(ABC):
 
     def get_in_port(self, name) -> Port | None:
         """:return: Input port with the given name. If port is not found, returns None."""
-        self.input.get(name)
+        return self.input.get(name)
 
     def get_out_port(self, name) -> Port | None:
         """:return: Output port with the given name. If port is not found, returns None."""
-        self.output.get(name)
+        return self.output.get(name)
 
 
 class Coupling(Generic[T]):
@@ -202,7 +200,7 @@ class Coupling(Generic[T]):
 
 
 class Atomic(Component, ABC):
-    def __init__(self, name: Optional[str] = None):
+    def __init__(self, name: str = None):
         """
         xDEVS implementation of DEVS Atomic Model.
         :param name: name of the atomic model. If no name is provided, it will take the class's name by default.
@@ -212,7 +210,6 @@ class Atomic(Component, ABC):
         self.phase: str = PHASE_PASSIVE
         self.sigma: float = INFINITY
 
-    @property
     def ta(self) -> float:
         """:return: remaining time for the atomic model's internal transition."""
         return self.sigma
@@ -238,11 +235,8 @@ class Atomic(Component, ABC):
         """Describes the output function of the atomic model."""
         pass
 
-    def deltcon(self, e: float):
-        """
-        Describes the confluent transitions of the atomic model. By default, the internal transition is triggered first.
-        :param e: elapsed time between last transition and the confluent transition.
-        """
+    def deltcon(self):
+        """Confluent transitions of the atomic model. By default, internal transition is triggered first."""
         self.deltint()
         self.deltext(0)
 
@@ -280,7 +274,7 @@ class Atomic(Component, ABC):
 
 
 class Coupled(Component, ABC):
-    def __init__(self, name: Optional[str] = None):
+    def __init__(self, name: str = None):
         """
         xDEVS implementation of DEVS Coupled Model.
         :param name: name of the coupled model. If no name is provided, it will take the class's name by default.

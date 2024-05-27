@@ -4,16 +4,16 @@ import _thread
 import itertools
 import pickle
 import logging
+import warnings
 
 from abc import ABC, abstractmethod
 from collections import defaultdict
-from concurrent import futures
 from typing import Generator, Optional
 from xmlrpc.server import SimpleXMLRPCServer
 
-from xdevs import INFINITY
-from xdevs.models import Atomic, Coupled, Component, Port, T
-from xdevs.transducers import Transducer
+from xdevs import INFINITY, T
+from xdevs.models import Atomic, Coupled, Component, Port
+from xdevs.abc import Transducer
 
 
 class SimulationClock:
@@ -88,22 +88,22 @@ class Simulator(AbstractSimulator):
 
     @property
     def ta(self) -> float:
-        return self.model.ta
+        return self.model.ta()
 
     def initialize(self):
         self.model.initialize()
         self.time_last = self.clock.time
-        self.time_next = self.time_last + self.model.ta
+        self.time_next = self.time_last + self.model.ta()
 
     def exit(self):
         self.model.exit()
 
     def deltfcn(self) -> Simulator | None:  # TODO
         if not self.model.in_empty():
-            e = self.clock.time - self.time_last
             if self.clock.time == self.time_next:
-                self.model.deltcon(e)
+                self.model.deltcon()
             else:
+                e = self.clock.time - self.time_last
                 self.model.deltext(e)
         elif self.clock.time == self.time_next:
             self.model.deltint()
@@ -117,7 +117,7 @@ class Simulator(AbstractSimulator):
         self.trigger_event_transducers()
 
         self.time_last = self.clock.time
-        self.time_next = self.time_last + self.model.ta
+        self.time_next = self.time_last + self.model.ta()
         return self
 
     def lambdaf(self):
@@ -153,21 +153,6 @@ class Coordinator(AbstractSimulator):
             # Root coordinator ignores them, as it is in charge of building them in _build_hierarchy
             self.event_transducers_mapping = event_transducers_mapping
             self.state_transducers_mapping = state_transducers_mapping
-
-        # A log named logger is created. Logs will be sent to the file SimulationsLogs.log. The file can be find in
-        # xdevs/examples/basic/
-
-        self.logger = logging.getLogger("Simulation_Coordinator")
-
-        fh = logging.FileHandler("SimulationLogs.log", mode='w')  # for overwrite the file add mode='w'
-
-        self.logger.setLevel(logging.DEBUG)
-
-        formatter = logging.Formatter('%(asctime)s %(name)s - %(levelname)s - %(message)s')
-
-        fh.setFormatter(formatter)
-
-        self.logger.addHandler(fh)
 
     @property
     def root_coordinator(self) -> bool:
@@ -325,7 +310,6 @@ class Coordinator(AbstractSimulator):
     def simulate(self, num_iters: int = 10000):
         self.clock.time = self.time_next
         cont = 0
-
         while cont < num_iters and self.clock.time < INFINITY:
             self.lambdaf()
             self.deltfcn()
@@ -334,19 +318,11 @@ class Coordinator(AbstractSimulator):
             self.clock.time = self.time_next
             cont += 1
 
-    def simulate_time(self, time_interv: float = 10000):
+    def simulate_time(self, time_interv: float = INFINITY):
         self.clock.time = self.time_next
         tf = self.clock.time + time_interv
 
         while self.clock.time < tf:
-            self.lambdaf()
-            self.deltfcn()
-            self._execute_transducers()
-            self.clear()
-            self.clock.time = self.time_next
-
-    def simulate_inf(self):
-        while True:
             self.lambdaf()
             self.deltfcn()
             self._execute_transducers()

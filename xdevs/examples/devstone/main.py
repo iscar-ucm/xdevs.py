@@ -5,27 +5,25 @@ import time
 from xdevs.sim import Coordinator
 
 from xdevs.examples.devstone.devstone import LI, HO, HI, HOmod
+from xdevs.examples.devstone.generator import Generator
 from xdevs.models import Coupled
-from xdevs.utils import Generator
+
 
 sys.setrecursionlimit(10000)
 
+MODEL_TYPES = ("LI", "HI", "HO", "HOmod")
+
 
 class DEVStoneEnvironment(Coupled):
-
-    def __init__(self, name, devstone_model, num_gen_outputs=1, gen_period=None):
+    def __init__(self, name, devstone_model, num_gen_outputs=1):
         super(DEVStoneEnvironment, self).__init__(name=name)
-        generator = Generator("generator", num_gen_outputs, gen_period)
+        generator = Generator("generator", num_gen_outputs)
         self.add_component(generator)
         self.add_component(devstone_model)
 
-        self.add_coupling(generator.o_out, devstone_model.i_in)
-
+        self.add_coupling(generator.o_out[0], devstone_model.i_in)
         if isinstance(devstone_model, HO) or isinstance(devstone_model, HOmod):
-            self.add_coupling(generator.o_out, devstone_model.i_in2)
-
-
-MODEL_TYPES = ("LI", "HI", "HO", "HOmod")
+            self.add_coupling(generator.o_out[0], devstone_model.i_in2)
 
 
 def parse_args():
@@ -47,10 +45,7 @@ def parse_args():
 
 
 if __name__ == '__main__':
-
     args = parse_args()
-
-    devstone_model = None
 
     if args.model_type == "LI":
         devstone_model = LI("LI_root", args.depth, args.width, args.int_cycles, args.ext_cycles)
@@ -60,6 +55,8 @@ if __name__ == '__main__':
         devstone_model = HO("HO_root", args.depth, args.width, args.int_cycles, args.ext_cycles)
     elif args.model_type == "HOmod":
         devstone_model = HOmod("HOmod_root", args.depth, args.width, args.int_cycles, args.ext_cycles)
+    else:
+        raise RuntimeError("Unrecognized model type.")
 
     start_time = time.time()
     env = DEVStoneEnvironment("DEVStoneEnvironment", devstone_model)
@@ -69,10 +66,9 @@ if __name__ == '__main__':
     coord.initialize()
     engine_setup_time = time.time()
 
-    coord.simulate()
+    coord.simulate_iters()
     sim_time = time.time()
 
-    print("Model creation time: {}".format(model_created_time - start_time))
-    print("Engine setup time: {}".format(engine_setup_time - model_created_time))
-    print("Simulation time: {}".format(sim_time - engine_setup_time))
-
+    print(f"Model creation time: {model_created_time - start_time}")
+    print(f"Engine setup time: {engine_setup_time - model_created_time}")
+    print(f"Simulation time: {sim_time - engine_setup_time}")

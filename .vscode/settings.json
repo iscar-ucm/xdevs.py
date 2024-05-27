@@ -1,0 +1,10 @@
+{
+    "python.autoComplete.extraPaths": ["${workspaceFolder}/xdevs"],
+    "python.testing.cwd": "${workspaceFolder/xdevs}",
+    "python.analysis.include": [
+        "${workspaceFolder}/xdevs"
+    ],
+    "python.analysis.extraPaths": [
+        "${workspaceFolder}"
+    ],
+}

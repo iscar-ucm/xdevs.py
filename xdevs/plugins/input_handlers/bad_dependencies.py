@@ -1,5 +1,5 @@
 from abc import ABC
-from xdevs.rt_sim.input_handler import InputHandler
+from xdevs.abc.handler import InputHandler
 
 
 class BadDependenciesHandler(InputHandler, ABC):
