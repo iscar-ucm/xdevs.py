@@ -94,7 +94,8 @@ class Processor(Atomic):
         if self.phase == PHASE_PASSIVE:
             self.current_job = self.i_in.get()
             self.hold_in(PHASE_ACTIVE, self.proc_t)
-        self.continuef(e)
+        else:
+            self.continuef(e)
 
     def lambdaf(self):
         self.o_out.add(self.current_job)
@@ -195,4 +196,4 @@ if __name__ == '__main__':
     gpt = Gpt("gpt", 3, 5, 100)
     coord = Coordinator(gpt)
     coord.initialize()
-    coord.simulate_iters()
+    coord.simulate_time()
