@@ -18,12 +18,10 @@ class CellMessage(Transducible, Generic[C, S]):
         if issubclass(cls.state_t, Transducible):
             res = {'cell_id': (str, lambda x: x.cell_id)}
             for field, (t, l) in cls.state_t.transducer_map().items():
-                res[field] = (t, lambda x: l(x.cell_state))
+                # f is a fake lambda input parameter to capture the current value of l
+                # We need this to avoid the late binding problem in lambda functions
+                res[field] = (t, lambda x, f=l: f(x.cell_state))
             return res
-            # return {
-            #    'cell_id': (str, lambda x: x.cell_id),
-            #     **{field: (t, lambda x: l(x.cell_state)) for field, (t, l) in cls.state_t.transducer_map().items()}
-            #}
         return {
             'cell_id': (str, lambda x: x.cell_id),
             'cell_state': (str, lambda x: x.cell_state),
