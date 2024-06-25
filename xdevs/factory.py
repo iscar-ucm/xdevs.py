@@ -3,7 +3,8 @@ import json
 import sys
 from importlib.metadata import entry_points, EntryPoint
 from typing import ClassVar
-from xdevs.abc import InputHandler, OutputHandler, Transducer
+from xdevs.abc import InputHandler, OutputHandler, Transducer, DelayedOutput
+from xdevs.celldevs import C
 from xdevs.models import Atomic, Component, Port, Coupled
 
 
@@ -244,3 +245,22 @@ class Components:
         config = data[name]  # Gets the actual component config
 
         return Components._nested_component(name, config)
+
+
+class DelayedOutputs:
+
+    _plugins: ClassVar[dict[str, type[DelayedOutput]]] = {
+        ep.name: ep.load() for ep in load_entry_points('xdevs.celldevs_outputs')
+    }
+
+    @staticmethod
+    def add_plugin(delay_id: str, plugin: type[DelayedOutput]):
+        if delay_id in DelayedOutputs._plugins:
+            raise ValueError('xDEVS Cell-DEVS delayed output plugin with name "{}" already exists'.format(delay_id))
+        DelayedOutputs._plugins[delay_id] = plugin
+
+    @staticmethod
+    def create_delayed_output(delay_id: str, cell_id: C, serve: bool = False) -> DelayedOutput:
+        if delay_id not in DelayedOutputs._plugins:
+            raise ValueError('xDEVS Cell-DEVS delayed output plugin with name "{}" not found'.format(delay_id))
+        return DelayedOutputs._plugins[delay_id](cell_id, serve)

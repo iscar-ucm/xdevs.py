@@ -10,9 +10,9 @@ from xdevs.models import Atomic, Component, Coupled, Port
 
 
 class Transducible(ABC):
-    @staticmethod
+    @classmethod
     @abstractmethod
-    def transducer_map() -> dict[str, tuple[Type[T], Callable[[Any], T]]]:
+    def transducer_map(cls) -> dict[str, tuple[Type[T], Callable[[Any], T]]]:
         pass
 
 

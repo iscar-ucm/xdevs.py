@@ -59,6 +59,11 @@ efp = "xdevs.examples.gpt.efp:Efp"
 [project.entry-points."xdevs.wrappers"]
 pypdevs = "xdevs.plugins.wrappers.pypdevs:PyPDEVSWrapper"
 
+[project.entry-points."xdevs.celldevs_outputs"]
+hybrid = "xdevs.plugins.celldevs_outputs.hybrid:HybridDelayedOutput"
+inertial = "xdevs.plugins.celldevs_outputs.inertial:InertialDelayedOutput"
+transport = "xdevs.plugins.celldevs_outputs.transport:TransportDelayedOutput"
+
 [tool.setuptools]
 include-package-data = false
 
