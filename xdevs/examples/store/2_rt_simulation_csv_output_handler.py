@@ -53,7 +53,7 @@ if __name__ == '__main__':
     c = RealTimeCoordinator(store, rt_manager)
     middle = time.time()
     print(f'Coordinator, Manager and Handlers Created. Elapsed time: {middle - start} sec')
-    c.simulate_iters(time_interv=sim_time)
+    c.simulate_rt(time_interv=sim_time)
     end = time.time()
     print(f'Simulation time (s) = {sim_time}')
     print(f'Simulation took: {end - start} sec')

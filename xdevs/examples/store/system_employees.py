@@ -73,7 +73,7 @@ if __name__ == '__main__':
 
     t_ini = time.time()
     print(f' >>> COMENZAMOS : {t_ini} : {datetime.datetime.now()}')
-    e_coord.simulate_iters(time_interv=sim_time)
+    e_coord.simulate_rt(time_interv=sim_time)
     print(f' >>> FIN : {time.time()}')
     print(f' Tiempo a ejecutar (s) = {sim_time}')
     print(f' Tiempo ejecutado (s) = {(time.time() - t_ini)}')

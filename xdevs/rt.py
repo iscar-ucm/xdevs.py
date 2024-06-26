@@ -142,7 +142,7 @@ class RealTimeCoordinator(Coordinator):
         self.manager.exit(self.clock.time)
         super().exit()
 
-    def simulate_iters(self, time_interv: float = float("inf")):
+    def simulate_rt(self, time_interv: float = float("inf")):
         self.initialize()
         while self.clock.time < time_interv:
             if self.time_next == float("inf") and not self.manager.input_handlers:

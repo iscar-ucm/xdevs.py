@@ -7,7 +7,7 @@ from xdevs.sim import Coordinator
 
 from xdevs.examples.devstone.devstone import LI, DelayedAtomic, HI
 from xdevs.factory import Transducers
-from xdevs.examples.gpt.gpt import Job, Processor, Gpt
+from xdevs.examples.gpt.models import Job, Processor, Gpt
 
 
 class TestCsvTransducer(TestCase):

@@ -70,7 +70,7 @@ if __name__ == '__main__':
     c = RealTimeCoordinator(gensys, rt_manager)
     middle = time.time()
     print("Coordinator and Manager Created. Elapsed time: {} sec".format(middle - start))
-    c.simulate_iters(time_interv=sim_time)
+    c.simulate_rt(time_interv=sim_time)
     end = time.time()
     print(f' Simulation time (s) = {sim_time}')
     print("Simulation took: {} sec".format(end - start))

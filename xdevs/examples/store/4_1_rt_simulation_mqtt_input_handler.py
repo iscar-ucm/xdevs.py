@@ -61,7 +61,7 @@ if __name__ == '__main__':
     middle = time.time()
     print(f"Coordinator and Manager Created. Elapsed time: {middle - start} sec")
     t_ini = time.time()
-    c.simulate_iters(time_interv=sim_time)
+    c.simulate_rt(time_interv=sim_time)
     end = time.time()
     print(f' Simulation time (s) = {sim_time}')
     print(f"Simulation took: {end - start} sec")
