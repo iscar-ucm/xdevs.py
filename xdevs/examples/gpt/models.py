@@ -16,7 +16,8 @@ class Job:
         """
         self.name: str = name
         self.time: float = 0
-
+    def __str__(self):
+        return self.name
 
 class Generator(Atomic):
     def __init__(self, name: str, gen_t: float):
@@ -171,7 +172,40 @@ class Transducer(Atomic):
         if self.phase == PHASE_DONE:
             self.o_out.add(True)
 
+class Ef(Coupled):
+    def __init__(self, name: str, gen_t: float, obs_t: float):
+        super().__init__(name)
 
+        gen = Generator('generator', gen_t)
+        trans = Transducer('transducer', obs_t)
+
+        self.add_component(gen)
+        self.add_component(trans)
+
+        self.p_in_ef = Port(Job, name='p_in_ef')
+        self.p_out_ef = Port(Job, name='p_out_ef')
+
+        self.add_in_port(self.p_in_ef)
+        self.add_out_port(self.p_out_ef)
+
+        self.add_coupling(gen.o_job, trans.i_arrived)
+        self.add_coupling(gen.o_job, self.p_out_ef)
+        self.add_coupling(trans.o_out, gen.i_stop)
+        self.add_coupling(self.p_in_ef, trans.i_solved)
+
+
+class Efp(Coupled):
+    def __init__(self, name: str, gen_t: float, proc_t: float, obs_t: float):
+        super().__init__(name)
+
+        ef = Ef('ef', gen_t, obs_t)
+        proc = Processor('processor', proc_t)
+
+        self.add_component(ef)
+        self.add_component(proc)
+
+        self.add_coupling(ef.p_out_ef, proc.i_in)
+        self.add_coupling(proc.o_out, ef.p_in_ef)
 class Gpt(Coupled):
     def __init__(self, name: str, gen_t: float, proc_t: float, obs_t: float):
         super().__init__(name)
@@ -189,11 +223,41 @@ class Gpt(Coupled):
         self.add_coupling(proc.o_out, trans.i_solved)
         self.add_coupling(trans.o_out, gen.i_stop)
 
+class GptIHOH(Coupled):
 
-if __name__ == '__main__':
-    from xdevs.sim import Coordinator
+    # Adaptation of the GPT DEVS model for injecting events via a new input port and for ejection of events via a new
+    # output port.
 
-    gpt = Gpt("gpt", 3, 5, 100)
-    coord = Coordinator(gpt)
-    coord.initialize()
-    coord.simulate_time()
+    def __init__(self, name: str, gen_t: float, proc_t: float, obs_t: float):
+        super().__init__(name)
+
+        gen = Generator('generator', gen_t)
+        proc = Processor('processor', proc_t)
+        trans = Transducer('transducer', obs_t)
+
+        # New input handler port
+        self.ih_in = Port(Job, name='ih_in')
+        self.add_in_port(self.ih_in)
+
+        # New output handler port
+        self.oh_out = Port(Job, name='ih_in')
+        self.add_out_port(self.oh_out)
+
+        self.add_component(gen)
+        self.add_component(proc)
+        self.add_component(trans)
+
+        # New coupling for the input handler
+        self.add_coupling(self.ih_in, proc.i_in)
+
+        # New coupling for the output handler
+        self.add_coupling(proc.o_out, self.oh_out)
+
+        self.add_coupling(gen.o_job, proc.i_in)
+        self.add_coupling(gen.o_job, trans.i_arrived)
+        self.add_coupling(proc.o_out, trans.i_solved)
+        self.add_coupling(trans.o_out, gen.i_stop)
+
+
+
+

@@ -49,12 +49,12 @@ tcp = "xdevs.plugins.output_handlers.tcp:TCPOutputHandler"
 mqtt = "xdevs.plugins.output_handlers.mqtt:MQTTOutputHandler"
 
 [project.entry-points."xdevs.components"]
-generator = "xdevs.examples.gpt.gpt:Generator"
-transducer = "xdevs.examples.gpt.gpt:Transducer"
-processor = "xdevs.examples.gpt.gpt:Processor"
-gpt = "xdevs.examples.gpt.gpt:Gpt"
-ef = "xdevs.examples.gpt.efp:Ef"
-efp = "xdevs.examples.gpt.efp:Efp"
+generator = "xdevs.examples.gpt.models:Generator"
+transducer = "xdevs.examples.gpt.models:Transducer"
+processor = "xdevs.examples.gpt.models:Processor"
+gpt = "xdevs.examples.gpt.models:Gpt"
+ef = "xdevs.examples.gpt.models:Ef"
+efp = "xdevs.examples.gpt.models:Efp"
 
 [project.entry-points."xdevs.wrappers"]
 pypdevs = "xdevs.plugins.wrappers.pypdevs:PyPDEVSWrapper"

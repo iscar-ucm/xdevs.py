@@ -1,9 +1,10 @@
 from xdevs.sim import Coordinator
-from xdevs.examples.gpt.models import Efp
+from xdevs.examples.gpt.models import Gpt
 
 if __name__ == '__main__':
 
-    efp = Efp('efp', 3, 5, 100)
-    coord = Coordinator(efp)
+    gpt = Gpt("gpt", 3, 5, 100)
+    coord = Coordinator(gpt)
     coord.initialize()
     coord.simulate()
+
