@@ -6,15 +6,10 @@ try:
     from paho.mqtt.client import Client
     from xdevs.abc.handler import InputHandler
 
-    # Desde este input handler me subscribo a topics para ver los mensajes que entran
-    # ruta: RTsys/coupled_name/input/port_name y to_do lo que llegue a ese puerto se inyecta.
 
 
-    #########################################################################
-    #########################################################################
-    #########################################################################
     def on_connect(client, userdata, flags, rc):
-        print(f'MQTT client connected with mqtt: {rc}')  # rc valor de exito o fracaso en la conexion
+        print(f'MQTT client connected with mqtt: {rc}')  # rc value for success or failure
         return rc
 
     def on_message(client, userdata, msg):
@@ -31,11 +26,6 @@ try:
 
             self.event_queue = event_queue
 
-
-    #########################################################################
-    #########################################################################
-    #########################################################################
-
     def mqtt_parser(mqtt_msg):
         topic = [item for item in mqtt_msg.topic.split('/')]
         port = topic[-1]
@@ -46,9 +36,14 @@ try:
     class MQTTInputHandler(InputHandler):
         def __init__(self, subscriptions: dict[str, int] = None, **kwargs):
             """
+            This input handler is the implementation of the MQTT protocol.
+            It subscribes to the desired topics and pushes the messages received to the system
 
-            :param subscriptions: diccionario con los topics y su qos
-            :param kwargs:
+            :param dict[str, int] subscriptions: dict of topics and their QoS. Default is None
+            :param str host: desired MQTT broker. Default is 'test.mosquitto.org'
+            :param int port: port of the MQTT broker to be used. Default is 1883
+            :param int keepalive: keepalive time for the MQTT connection. Default is 60
+            :param Callable[[mqtt.Message], str, str] event_parser: from the received message obtain the topic and the message payload. Default is mqtt_parser
             """
 
             kwargs['event_parser'] = kwargs.get('event_parser', mqtt_parser)
@@ -78,19 +73,6 @@ try:
                 print(f'MQTT: Event pushed')    # {event} t = {datetime.datetime.now()}')
                 self.push_event(event)
 
-    if __name__ == '__main__':
-        input_queue = queue.SimpleQueue()
-        event_Q = queue.SimpleQueue()
-
-        sub: dict = {
-            'ALSW/#': 0,
-            'ALSW/TEP': 0,
-            'RTsys/#': 0,
-        }
-        # C = MQTTClient(event_queue=event_Q)
-        IN = MQTTInputHandler(queue=input_queue, subscriptions=sub)
-        IN.initialize()
-        IN.run()
 
 except ImportError:
     from .bad_dependencies import BadDependenciesHandler

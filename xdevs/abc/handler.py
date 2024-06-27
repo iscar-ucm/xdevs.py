@@ -5,14 +5,13 @@ from typing import Callable, Any
 
 
 class Connector:
-    def __init__(self, conections: dict[str, str]):
+    def __init__(self, connections: dict[str, str]):
         """
-        Función para conectar de forma correcta los puertos (que usen protocolo MQTT)
+        Function to connect ports correctly (using MQTT protocol)
 
-        :param conections: dict[key: str, value: str]. Donde la key es el puerto de al que me quiero conectar y el
-            value es el puerto de mi acoplado.
+        :param connections: dict[key: str, value: str]. Where the key is the port I am connecting to (via MQTT) and the value is the port of my coupled.
         """
-        self.connections: dict[str, str] = conections
+        self.connections: dict[str, str] = connections
 
     def input_handler(self, port: str):
         if self.connections is not None:
@@ -42,7 +41,7 @@ class InputHandler(ABC):
         self.msg_parsers: dict[str, Callable[[str], Any]] = kwargs.get('msg_parsers', dict())
 
         self.connections: dict[str, str] = kwargs.get('connections', dict())
-        self.connector = Connector(conections=self.connections)
+        self.connector = Connector(connections=self.connections)
 
     def initialize(self):
         """Performs any task before calling the run method. It is implementation-specific. By default, it is empty."""

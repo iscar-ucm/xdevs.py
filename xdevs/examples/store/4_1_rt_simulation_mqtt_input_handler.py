@@ -42,13 +42,15 @@ if __name__ == '__main__':
     print(f"\tNumber of Employees: {n_employees}")
     print(f"\tMean time required to dispatch clients: {mean_employees} seconds (stddev of {stddev_employees})")
 
-    conexiones = {
-        'Gen_ClientOut': 'Queue_ClientGen'
+    # Map of the port of I am subscribing to and the port of the model
+    connections = {
+        'Gen_ClientOut': 'i_ExternalGen'
     }
-    topics = {'RTsys/Output/Gen_ClientOut': 0}
-
+    # Topics I am subscribing to
+    topics = {'RTsys/output/Gen_ClientOut': 0}
+    # Parser of the port of my model to the desired Port Type
     msg_parser = {
-        'Queue_ClientGen': mqtt_parser,
+        'i_ExternalGen': mqtt_parser,
     }
 
     start = time.time()
@@ -56,7 +58,7 @@ if __name__ == '__main__':
     middle = time.time()
     print(f"Model Created. Elapsed time: {middle - start} sec")
     rt_manager = RealTimeManager(max_jitter=0.2, event_window=0.5)
-    rt_manager.add_input_handler('mqtt', subscriptions=topics, connections=conexiones, msg_parsers=msg_parser)
+    rt_manager.add_input_handler('mqtt', subscriptions=topics, connections=connections, msg_parsers=msg_parser)
     c = RealTimeCoordinator(storeNOGEN, rt_manager)
     middle = time.time()
     print(f"Coordinator and Manager Created. Elapsed time: {middle - start} sec")

@@ -63,12 +63,12 @@ class StoreWithoutGen(Coupled):
         self.o_p_queue = Port(ClientToEmployee)
         self.add_out_port(self.o_p_queue)
 
-        self.i_port_gen = Port(NewClient)
-        self.add_in_port(self.i_port_gen)
+        self.i_ExternalGen = Port(NewClient, 'i_ExternalGen')
+        self.add_in_port(self.i_ExternalGen)
 
         self.add_component(queue)
 
-        self.add_coupling(self.i_port_gen, queue.input_new_client)
+        self.add_coupling(self.i_ExternalGen, queue.input_new_client)
 
         self.add_coupling(queue.output_client_to_employee, self.o_p_queue)
 
