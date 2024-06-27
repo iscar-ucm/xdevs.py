@@ -50,6 +50,7 @@ class CSVTransducer(Transducer):
         for state_insert in self._iterate_state_inserts(sim_time):
             self.state_csv_writer.writerow([state_insert[field] for field in self.state_header])
 
+
         for event_insert in self._iterate_event_inserts(sim_time):
             self.event_csv_writer.writerow([event_insert[field] for field in self.event_header])
 
@@ -58,7 +59,7 @@ class CSVTransducer(Transducer):
         os.makedirs(os.path.dirname(filename), exist_ok=True)
 
         # 3. Create output CSV file and write the header row.
-        csv_file = open(filename, 'w')
+        csv_file = open(filename,newline='', mode='w')
         writer = csv.writer(csv_file, delimiter=self.delimiter)
         writer.writerow(header)
 

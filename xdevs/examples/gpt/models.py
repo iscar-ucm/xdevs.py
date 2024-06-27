@@ -14,10 +14,11 @@ class Job:
         Job event class. It represents a job sent by the generator and processed by the processor.
         :param name: job name
         """
-        self.name: str = name
+        self.name: str = str(name)
         self.time: float = 0
     def __str__(self):
         return self.name
+
 
 class Generator(Atomic):
     def __init__(self, name: str, gen_t: float):
@@ -240,7 +241,7 @@ class GptIHOH(Coupled):
         self.add_in_port(self.ih_in)
 
         # New output handler port
-        self.oh_out = Port(Job, name='ih_in')
+        self.oh_out = Port(Job, name='oh_out')
         self.add_out_port(self.oh_out)
 
         self.add_component(gen)
