@@ -6,6 +6,7 @@ This folder stores several examples in order to illustrate some of the possibili
 ## `xDEVS.py` Virtual Simulation
 
 A virtual simulation is carried out only taking into account the virtual environment. 
+In the context of this repository, a DEVS virtual simulation will be achieved by a Coordinator. Two possible options are provided based on two methods: `simulate` and `simulate_time`. The first one is based on the number of iterations and the second one on the desired virtual time to simulate. 
 
 ### Example:
 
@@ -27,7 +28,7 @@ This section aims to show a collection of examples based on the methodology foll
 $ cd xdevs/examples/gpt
 $ python3 gpt_rt_sim.py
 ```
-2. #### Input handler real-time simulation
+2. #### (TCP) Input handler real-time simulation
 
 ```bash
 $ cd xdevs/examples/gpt
@@ -49,7 +50,7 @@ c.connect((HOST,PORT))
 c.sendall('ih_in,TCP'.encode()) # The data is 'port_name,msg'
 ```
 
-3. #### Output handler real-time simulation
+3. #### (TCP) Output handler real-time simulation
 
 ```bash
 $ cd xdevs/examples/gpt
@@ -83,7 +84,7 @@ while True:
         break
 ````
 
-4. #### Input and Output handlers real-time simulation
+4. #### (TCP) Input and Output handlers real-time simulation
 
 ````bash
 $ cd xdevs/examples/gpt

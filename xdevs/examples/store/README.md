@@ -44,3 +44,20 @@ The client can send messages to the server in the following format:
 ```
 
 The model only has one input port, called `IP_NewClient`.
+
+## MQTT Example
+
+An MQTT example is provided, in which the connection between two `DEVS` models is created.
+The execution of both models should be carried out in parallel.
+
+_First model_
+```bash
+$ cd xdevs/examples/store
+$ python3 4_1_rt_simulation_mqtt_input_handler.py
+```
+
+_Second model_
+```bash
+$ cd xdevs/examples/store
+$ python3 4_2_rt_simulation_mqtt_output_handler.py
+```

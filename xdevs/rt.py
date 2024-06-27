@@ -130,6 +130,12 @@ class RealTimeManager:
 
 
 class RealTimeCoordinator(Coordinator):
+    """
+    The RealTimeCoordinator is the adaptation of the already existing class Coordinator to the real-time simulations.
+
+    :param Coupled model: A DEVS model to simulate in real-time.
+    :param RealTimeManager manager: A RealTimeManager to handle the external events.
+    """
     def __init__(self, model: Coupled, manager: RealTimeManager):
         super().__init__(model)
         self.manager: RealTimeManager = manager
@@ -147,10 +153,10 @@ class RealTimeCoordinator(Coordinator):
         while self.clock.time < time_interv:
             if self.time_next == float("inf") and not self.manager.input_handlers:
                 break
-            # SLEEP UNTIL NEXT STATE TRANSITION
-            t, msgs = self.manager.wait_until(min(time_interv, self.time_next))
+            # WAIT UNTIL NEXT STATE TRANSITION
+            t, events = self.manager.wait_until(min(time_interv, self.time_next))
             # INJECT EXTERNAL EVENTS (if any)
-            for port_id, msg in msgs:
+            for port_id, msg in events:
                 port = self.model.get_in_port(port_id)
                 if port is not None:
                     try:
