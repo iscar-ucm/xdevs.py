@@ -87,5 +87,5 @@ Couplings define connections between components:
 
 ```bash
 $ cd xdevs/examples/json
-$ python3 main.py
+$ python3 json2xdevs_example.py
 ```
