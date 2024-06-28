@@ -11,7 +11,7 @@ The `from_json` method allows you to parse a `JSON` file into a `DEVS` model. Th
 
 **ATTENTION PLEASE**  ❗❗
 
- Take into account that the `component_id` inside the `JSON` file must be identified as an `entry-point` of `Components`  in `xdevs.factory `. (See the `Factory` section in `xdevs.abc` for more information).
+ Take into account that the `component_id` inside the `JSON` file must be identified as an `entry-point` of `Components`  in `xdevs.factory`. (See the `Factory` section in `xdevs.abc.README` for more information).
 
 
 ## JSON Structure
@@ -24,10 +24,10 @@ The top-level JSON object represents the master component.
 {
     "MasterComponentName": {
         "components": {
-            // Nested components
+            "Nested components" : {}
         },
         "couplings": [
-            // List of couplings
+            "List of couplings"
         ]
     }
 }
@@ -45,21 +45,21 @@ Components can be either already registered in the `entry-points` or couple:
 "components": {
     "CoupledModel1": {
         "components": {
-            // Nested components
+            Nested components 
         },
         "couplings": [
-            // List of connection dictionaries
+            List of connection dictionaries
         ]
     },
     "Component2": {
         "component_id": "ID_from_factory",
-        "args": [/* positional arguments */],
+        "args": [ positional arguments ],
         "kwargs": {
             "a_parameter": "value",
-            // Other keyword arguments
+            Other keyword arguments
         }
     }
-    // Additional components
+    Additional components
 }
 
 ```
@@ -75,11 +75,11 @@ Couplings define connections between components:
 "couplings": [
     {
         "componentFrom": "Model1",
-        "portFrom": "PortA", // Port name defined in Model1
+        "portFrom": "PortA",  Port name defined in Model1
         "componentTo": "Model2",
         "portTo": "PortB"
     }
-    // Additional couplings
+       Additional couplings
 ]
 ```  
 

@@ -15,7 +15,8 @@ try:
         :param int port: port of the MQTT broker to be used. Default is 1883
         :param int keepalive: keepalive time for the MQTT connection. Default is 60
         :param str topic: desired topic to publish the events. Default is 'RTsys' and generate the topic as 'RTsys/output/<port>'
-        :param Callable[[str, str], Tuple[str,str]] event_parser: function to obtain the topic and message payload to be published.
+        :param Callable[[str, str], Tuple[str,str]] event_parser: function to parser the port and the message to be
+                ejected into a MQTT topic and the payload of the MQTT message.
         """
         def __init__(self, **kwargs):
             super().__init__(**kwargs)
