@@ -1,7 +1,9 @@
 from __future__ import annotations
 import unittest
 from typing import Dict, Tuple, Type, Callable
-from xdevs.transducers import Transducer, Transducers, Transducible, T
+from xdevs import T
+from xdevs.abc.transducer import Transducer, Transducible
+from xdevs.factory import Transducers
 
 
 class NonTransducibleClass:

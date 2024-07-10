@@ -1,0 +1,33 @@
+{
+    "efp": {
+        "components": {
+            "ef": {
+                "component_id": "ef",
+                "kwargs": {
+                    "gen_t": 3.0,
+                    "obs_t": 100.0
+                }
+            },
+            "processor": {
+                "component_id": "processor",
+                "kwargs": {
+                    "proc_t": 5.0
+                }
+            }
+        },
+        "couplings": [
+            {
+                "componentFrom": "ef",
+                "portFrom": "p_out_ef",
+                "componentTo": "processor",
+                "portTo": "i_in"
+            },
+            {
+                "componentFrom": "processor",
+                "portFrom": "o_out",
+                "componentTo": "ef",
+                "portTo": "p_in_ef"
+            }
+        ]
+    }
+}
